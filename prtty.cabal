@@ -27,7 +27,7 @@ common shared
 library
   import:          shared
   hs-source-dirs:  src
-  exposed-modules:
+  exposed-modules: VT
   build-depends:
 
 executable prtty-app
@@ -36,3 +36,15 @@ executable prtty-app
   hs-source-dirs: app
   ghc-options:    -threaded
   build-depends:  prtty
+
+test-suite prtty-test
+  import: shared
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Spec.hs
+  build-tool-depends: hspec-discover:hspec-discover == 2.*
+  other-modules:
+    VTSpec
+  build-depends:
+    prtty
+    , hspec ^>= 2.11.12
