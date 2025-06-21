@@ -1,0 +1,38 @@
+cabal-version:   3.0
+name:            prtty
+version:         0.1.0.0
+license:
+author:          John Cinnamond
+maintainer:      john@cinnamond.me.uk
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
+
+common shared
+  ghc-options:        -Wall
+  build-depends:
+    , base        ^>=4.19.1.0
+    , bytestring  ^>=0.12.1.0
+    , text        ^>=2.1.1
+
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    DuplicateRecordFields
+    OverloadedRecordDot
+    OverloadedStrings
+    TypeFamilies
+
+library
+  import:          shared
+  hs-source-dirs:  src
+  exposed-modules:
+  build-depends:
+
+executable prtty-app
+  import:         shared
+  main-is:        Main.hs
+  hs-source-dirs: app
+  ghc-options:    -threaded
+  build-depends:  prtty
