@@ -10,8 +10,8 @@ module VT (
 
    -- Colors
    black, red, green, yellow, blue, magenta, cyan, white,
-   fgColor,
-   bgColor,
+   fgColor, fgRGB,
+   bgColor, bgRGB,
 )
 where
 
@@ -55,5 +55,14 @@ white = Style "37"
 fgColor :: Text -> Displayable
 fgColor x = Style "38" <> Style "5" <> Style x
 
+fgRGB :: Int -> Int -> Int -> Displayable
+fgRGB r g b = Style "38" <> Style "2" <> Style (fromInt r) <> Style (fromInt g) <> Style (fromInt b)
+
 bgColor :: Text -> Displayable
 bgColor x = Style "48" <> Style "5" <> Style x
+
+bgRGB :: Int -> Int -> Int -> Displayable
+bgRGB r g b = Style "48" <> Style "2" <> Style (fromInt r) <> Style (fromInt g) <> Style (fromInt b)
+
+fromInt :: Int -> Text
+fromInt = T.pack . show
