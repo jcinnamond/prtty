@@ -22,9 +22,9 @@ spec = do
         toText (bgRGB 0x77 0x77 0xff) `shouldBe` "\x1b[48;2;119;119;255m"
 
     it "formats reset" $ do
-        toText Reset `shouldBe` "\x1b[0m"
+        toText reset `shouldBe` "\x1b[0m"
 
     it "formats combined attributes and text" $ do
-        toText (Style "1" <> "hi" <> Reset) `shouldBe` "\x1b[1mhi\x1b[0m"
+        toText (Style "1" <> "hi" <> reset) `shouldBe` "\x1b[1mhi\x1b[0m"
     it "formats multiple attributes combined with text" $ do
-        toText ((Style "1" <> Style "2") <> "hi" <> Reset) `shouldBe` "\x1b[1;2mhi\x1b[0m"
+        toText ((Style "1" <> Style "2") <> "hi" <> reset) `shouldBe` "\x1b[1;2mhi\x1b[0m"

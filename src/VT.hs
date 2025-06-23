@@ -5,8 +5,8 @@ module VT (
    Displayable(..),
    toText,
 
-   -- Text styles
-   bold,
+   -- Styles
+   reset, bold,
 
    -- Colors
    black, red, green, yellow, blue, magenta, cyan, white,
@@ -19,10 +19,18 @@ import Data.Text (Text)
 import Data.String (IsString(..))
 import qualified Data.Text as T
 
-data Displayable = 
+data Displayable =
     Literal Text
     | Style Text
-    | Reset
+    | Home
+    | MoveTo Int Int
+    | SaveCursor
+    | RestoreCursor
+    | SaveScreen
+    | RestoreScreen
+    | AltBuffer
+    | NoAltBuffer
+    | ClearScreen
     | Combined Displayable Displayable
 
 instance IsString Displayable where
@@ -33,11 +41,25 @@ instance Semigroup Displayable where
     (Style x) <> (Style y) = Style $ x <> ";" <> y
     x <> y = Combined x y
 
+esc :: Text -> Text -> Text
+esc x end = "\x1b[" <> x <> end
+
 toText :: Displayable -> Text
 toText (Literal x) = x
-toText (Style x) = "\x1b[" <> x <> "m"
-toText Reset = "\x1b[0m"
+toText (Style x) = esc x "m"
+toText Home = esc "" "H"
+toText (MoveTo x y) = esc (fromInt x <> ";" <> fromInt y) "H"
+toText SaveCursor = esc "7" ""
+toText RestoreCursor = esc "8" ""
+toText SaveScreen = esc "?47" "h"
+toText RestoreScreen = esc "?47" "l"
+toText ClearScreen = esc "" "J"
 toText (Combined x y) = toText x <> toText y
+toText AltBuffer = esc "?1049" "h"
+toText NoAltBuffer = esc "?1049" "l"
+
+reset :: Displayable
+reset = Style "0"
 
 bold :: Displayable
 bold = Style "1"

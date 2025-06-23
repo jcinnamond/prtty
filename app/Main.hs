@@ -2,12 +2,28 @@ module Main where
 
 import VT
 import qualified Data.Text.IO as TIO
+import System.IO (hSetBuffering, hSetEcho, stdin, BufferMode (NoBuffering), hFlush, stdout)
 
+out :: Displayable -> IO ()
+out x = TIO.putStr (toText x) >> hFlush stdout
 
 main :: IO ()
 main = do
-    TIO.putStrLn . toText $
-        bgColor "214" <> fgColor "21" <> bold <> "hi" <> Reset
+    hSetBuffering stdin NoBuffering
+    hSetEcho stdin False
 
-    TIO.putStrLn . toText $ 
-        bgRGB 0 0 0xff <> fgRGB 0x99 0x99 0 <> "some text" <> Reset
+    out $ AltBuffer <> Home
+
+    out $
+        bgColor "214" <> fgColor "21" <> bold <> "hi" <> reset
+
+    _ <- getChar
+
+    out $ MoveTo 5 10
+
+    out $
+        bgRGB 0 0 0xff <> fgRGB 0x99 0x99 0 <> "some text" <> reset
+
+    _ <- getChar
+
+    out NoAltBuffer
