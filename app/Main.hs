@@ -1,8 +1,9 @@
 module Main where
 
+import Cmd (run)
+import Data.Text.IO qualified as TIO
+import System.IO (BufferMode (NoBuffering), hFlush, hSetBuffering, hSetEcho, stdin, stdout)
 import VT
-import qualified Data.Text.IO as TIO
-import System.IO (hSetBuffering, hSetEcho, stdin, BufferMode (NoBuffering), hFlush, stdout)
 
 out :: Displayable -> IO ()
 out x = TIO.putStr (toText x) >> hFlush stdout
@@ -19,10 +20,11 @@ main = do
 
     _ <- getChar
 
-    out $ MoveTo 5 10
+    run "hx cabal.project"
 
-    out $
-        bgRGB 0 0 0xff <> fgRGB 0x99 0x99 0 <> "some text" <> reset
+    out $ AltBuffer <> MoveTo 5 10
+
+    out $ bgRGB 0 0 0xff <> fgRGB 0x99 0x99 0 <> "some text" <> reset
 
     _ <- getChar
 

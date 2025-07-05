@@ -27,24 +27,28 @@ common shared
 library
   import:          shared
   hs-source-dirs:  src
-  exposed-modules: VT
-  build-depends:
+  exposed-modules:
+    Cmd
+    VT
+
+  build-depends:   unix ^>=2.8.7.0
 
 executable prtty-app
   import:         shared
   main-is:        Main.hs
   hs-source-dirs: app
   ghc-options:    -threaded
-  build-depends:  prtty
+  build-depends:
+    , prtty
+    , unix   ^>=2.8.7.0
 
 test-suite prtty-test
-  import: shared
-  type: exitcode-stdio-1.0
-  hs-source-dirs: test
-  main-is: Spec.hs
-  build-tool-depends: hspec-discover:hspec-discover == 2.*
-  other-modules:
-    VTSpec
+  import:             shared
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            Spec.hs
+  build-tool-depends: hspec-discover:hspec-discover >=2 && <3
+  other-modules:      VTSpec
   build-depends:
-    prtty
-    , hspec ^>= 2.11.12
+    , hspec  ^>=2.11.12
+    , prtty
