@@ -1,5 +1,5 @@
 {
-  description = "Some haskell project";
+  description = "Presentations in the tty";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
@@ -16,22 +16,17 @@
           pkgs = import nixpkgs {
             inherit system;
           };
-          haskellPackages = pkgs.haskell.packages.ghc982;
+          haskellPackages = pkgs.haskell.packages.ghc9122;
         in
         pkgs.mkShell {
-          packages = with pkgs; [
+          packages = [
             haskellPackages.ghc
             haskellPackages.haskell-language-server
             haskellPackages.cabal-install
-            haskellPackages.cabal-fmt
+            haskellPackages.cabal-gild
             haskellPackages.fourmolu
             haskellPackages.hlint
-            fish
           ];
-
-          shellHook = ''
-            exec fish
-          '';
         };
     };
 }
