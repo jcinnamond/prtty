@@ -2,25 +2,33 @@
 Useful reference: https://gist.github.com/ConnerWill/d4b6c776b509add763e17f9f113fd25b
 -}
 module VT (
-   Displayable(..),
-   toText,
-
-   -- Styles
-   reset, bold,
-
-   -- Colors
-   black, red, green, yellow, blue, magenta, cyan, white,
-   fgColor, fgRGB,
-   bgColor, bgRGB,
+    Displayable (..),
+    toText,
+    -- Styles
+    reset,
+    bold,
+    -- Colors
+    black,
+    red,
+    green,
+    yellow,
+    blue,
+    magenta,
+    cyan,
+    white,
+    fgColor,
+    fgRGB,
+    bgColor,
+    bgRGB,
 )
 where
 
+import Data.String (IsString (..))
 import Data.Text (Text)
-import Data.String (IsString(..))
-import qualified Data.Text as T
+import Data.Text qualified as T
 
-data Displayable =
-    Literal Text
+data Displayable
+    = Literal Text
     | Style Text
     | Home
     | MoveTo Int Int
@@ -32,12 +40,13 @@ data Displayable =
     | NoAltBuffer
     | ClearScreen
     | Combined Displayable Displayable
+    deriving stock (Show, Eq)
 
 instance IsString Displayable where
     fromString = Literal . T.pack
 
 instance Semigroup Displayable where
-    (Literal x ) <> (Literal y) = Literal $ x <> y
+    (Literal x) <> (Literal y) = Literal $ x <> y
     (Style x) <> (Style y) = Style $ x <> ";" <> y
     x <> y = Combined x y
 

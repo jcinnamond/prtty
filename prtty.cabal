@@ -29,6 +29,7 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Cmd
+    Runtime
     VT
 
   build-depends:   unix ^>=2.8.7.0
