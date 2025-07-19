@@ -1,5 +1,8 @@
 packages:
   .
 
+jobs: $ncpus
+semaphore: true
+
 test-show-details: direct
-tests: True
+tests: true
