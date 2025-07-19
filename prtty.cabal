@@ -10,7 +10,7 @@ extra-doc-files: CHANGELOG.md
 common shared
   ghc-options:        -Wall
   build-depends:
-    , base        ^>=4.19.1.0
+    , base        ^>=4.21.0.0
     , bytestring  ^>=0.12.1.0
     , text        ^>=2.1.1
 
@@ -20,6 +20,7 @@ common shared
     DeriveAnyClass
     DerivingStrategies
     DuplicateRecordFields
+    MultilineStrings
     OverloadedRecordDot
     OverloadedStrings
     TypeFamilies
@@ -27,12 +28,17 @@ common shared
 library
   import:          shared
   hs-source-dirs:  src
-  exposed-modules:
+
+  -- cabal-gild: discover src
+  exposed-modules:  
     Cmd
     Runtime
+    PDL
     VT
 
-  build-depends:   unix ^>=2.8.7.0
+  build-depends:
+    , megaparsec  ^>=9.7.0
+    , unix        ^>=2.8.7.0
 
 executable prtty-app
   import:         shared
@@ -49,7 +55,12 @@ test-suite prtty-test
   hs-source-dirs:     test
   main-is:            Spec.hs
   build-tool-depends: hspec-discover:hspec-discover >=2 && <3
-  other-modules:      VTSpec
+  other-modules:
+    PDLSpec
+    VTSpec
+
   build-depends:
-    , hspec  ^>=2.11.12
+    , hspec             ^>=2.11.12
+    , hspec-megaparsec  ^>=2.2.1
+    , megaparsec        ^>=9.7.0
     , prtty
