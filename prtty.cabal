@@ -1,20 +1,20 @@
-cabal-version:   3.0
-name:            prtty
-version:         0.1.0.0
+cabal-version: 3.0
+name: prtty
+version: 0.1.0.0
 license:
-author:          John Cinnamond
-maintainer:      john@cinnamond.me.uk
-build-type:      Simple
+author: John Cinnamond
+maintainer: john@cinnamond.me.uk
+build-type: Simple
 extra-doc-files: CHANGELOG.md
 
 common shared
-  ghc-options:        -Wall
+  ghc-options: -Wall
   build-depends:
-    , base        ^>=4.21.0.0
-    , bytestring  ^>=0.12.1.0
-    , text        ^>=2.1.1
+    base ^>=4.21.0.0,
+    bytestring ^>=0.12.1.0,
+    text ^>=2.1.1,
 
-  default-language:   GHC2021
+  default-language: GHC2021
   default-extensions:
     DataKinds
     DeriveAnyClass
@@ -26,41 +26,40 @@ common shared
     TypeFamilies
 
 library
-  import:          shared
-  hs-source-dirs:  src
-
+  import: shared
+  hs-source-dirs: src
   -- cabal-gild: discover src
-  exposed-modules:  
+  exposed-modules:
     Cmd
-    Runtime
     PDL
+    Runtime
     VT
 
   build-depends:
-    , megaparsec  ^>=9.7.0
-    , unix        ^>=2.8.7.0
+    megaparsec ^>=9.7.0,
+    unix ^>=2.8.7.0,
 
 executable prtty-app
-  import:         shared
-  main-is:        Main.hs
+  import: shared
+  main-is: Main.hs
   hs-source-dirs: app
-  ghc-options:    -threaded
+  ghc-options: -threaded
   build-depends:
-    , prtty
-    , unix   ^>=2.8.7.0
+    prtty,
+    unix ^>=2.8.7.0,
 
 test-suite prtty-test
-  import:             shared
-  type:               exitcode-stdio-1.0
-  hs-source-dirs:     test
-  main-is:            Spec.hs
+  import: shared
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Spec.hs
   build-tool-depends: hspec-discover:hspec-discover >=2 && <3
   other-modules:
     PDLSpec
     VTSpec
 
   build-depends:
-    , hspec             ^>=2.11.12
-    , hspec-megaparsec  ^>=2.2.1
-    , megaparsec        ^>=9.7.0
-    , prtty
+    hspec ^>=2.11.12,
+    hspec-megaparsec ^>=2.2.1,
+    megaparsec ^>=9.7.0,
+    prtty,
