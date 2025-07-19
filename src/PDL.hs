@@ -2,13 +2,16 @@ module PDL (
   pdlParser,
   parseExpr,
   Expr (..),
+  parseFile,
 ) where
 
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.IO qualified as TIO
 import Data.Void (Void)
-import Text.Megaparsec (Parsec, eof, many, some, (<|>))
+import Text.Megaparsec (Parsec, eof, many, parse, some, (<|>))
 import Text.Megaparsec.Char (alphaNumChar, eol, hspace, printChar, string, symbolChar)
+import Text.Megaparsec.Error (ParseErrorBundle)
 
 type Parser = Parsec Void Text
 
@@ -16,6 +19,11 @@ data Expr
   = Instruction Text [Expr]
   | Literal Text
   deriving stock (Show, Eq)
+
+parseFile :: FilePath -> IO (Either (ParseErrorBundle Text Void) [Expr])
+parseFile p = do
+  s <- TIO.readFile p
+  pure $ parse pdlParser p s
 
 pdlParser :: Parser [Expr]
 pdlParser = many (parseExpr <* many eol) <* eof

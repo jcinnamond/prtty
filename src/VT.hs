@@ -34,6 +34,8 @@ data Displayable
     | MoveTo Int Int
     | SaveCursor
     | RestoreCursor
+    | HideCursor
+    | ShowCursor
     | SaveScreen
     | RestoreScreen
     | AltBuffer
@@ -60,9 +62,11 @@ toText Home = esc "" "H"
 toText (MoveTo x y) = esc (fromInt x <> ";" <> fromInt y) "H"
 toText SaveCursor = esc "7" ""
 toText RestoreCursor = esc "8" ""
+toText HideCursor = esc "?25" "l"
+toText ShowCursor = esc "?25" "h"
 toText SaveScreen = esc "?47" "h"
 toText RestoreScreen = esc "?47" "l"
-toText ClearScreen = esc "" "J"
+toText ClearScreen = esc "2J" ""
 toText (Combined x y) = toText x <> toText y
 toText AltBuffer = esc "?1049" "h"
 toText NoAltBuffer = esc "?1049" "l"

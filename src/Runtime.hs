@@ -9,7 +9,7 @@ import Control.Concurrent (threadDelay)
 import Data.ByteString.Char8 (ByteString)
 import Data.Text.IO qualified as TIO
 import System.IO (BufferMode (..), hFlush, hSetBuffering, hSetEcho, stdin, stdout)
-import VT (Displayable (AltBuffer, NoAltBuffer), toText)
+import VT (Displayable (AltBuffer, ClearScreen, HideCursor, Home, NoAltBuffer, ShowCursor), toText)
 
 data Instruction
     = Output Displayable
@@ -23,13 +23,21 @@ data Duration = Second Int | Millisecond Int
     deriving stock (Show, Eq)
 
 runPresentation :: [Instruction] -> IO ()
-runPresentation is = initTerminal >> mapM_ runInstruction is
+runPresentation is = initTerminal >> mapM_ runInstruction is >> restoreTerminal
 
 initTerminal :: IO ()
 initTerminal = do
     hSetBuffering stdin NoBuffering
     hSetEcho stdin False
     output AltBuffer
+    output ClearScreen
+    output Home
+    output HideCursor
+
+restoreTerminal :: IO ()
+restoreTerminal = do
+    output ShowCursor
+    output NoAltBuffer
 
 runInstruction :: Instruction -> IO ()
 runInstruction (Output t) = output t >> hFlush stdout

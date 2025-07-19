@@ -1,0 +1,8 @@
+this is some text
+.wait
+.clear
+.color 33
+hello
+.wait
+more text (does this have a newline?)
+.wait
