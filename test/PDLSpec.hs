@@ -4,7 +4,7 @@ module PDLSpec (spec) where
 
 import PDL.Internal qualified as PDL
 import PDL.Types qualified as PDL
-import Test.Hspec (Spec, describe, it)
+import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Hspec.Megaparsec (shouldFailOn, shouldParse)
 import Text.Megaparsec qualified as M
 import Text.RawString.QQ (r)
@@ -24,6 +24,9 @@ spec = do
         let parse = M.parse PDL.parseHex ""
         it "parses hex values" $ do
             parse "#11aae5" `shouldParse` PDL.Hex ('1', '1') ('a', 'a') ('e', '5')
+
+        it "converts hex characters to ints" $ do
+            (PDL.fromHex <$> parse "#0077ff") `shouldBe` Right (0, 119, 255)
 
     describe "parseDuration" $ do
         let parse = M.parse PDL.parseDuration ""

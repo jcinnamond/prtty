@@ -17,9 +17,7 @@ module VT (
     cyan,
     white,
     fgColor,
-    fgRGB,
     bgColor,
-    bgRGB,
 )
 where
 
@@ -87,17 +85,17 @@ magenta = Style "35"
 cyan = Style "36"
 white = Style "37"
 
-fgColor :: Text -> Displayable
-fgColor x = Style "38" <> Style "5" <> Style x
+fgColor :: (Int, Int, Int) -> Displayable
+fgColor rgb = Style "38" <> Style "2" <> hexToStyle rgb
 
-fgRGB :: Int -> Int -> Int -> Displayable
-fgRGB r g b = Style "38" <> Style "2" <> Style (fromInt r) <> Style (fromInt g) <> Style (fromInt b)
+bgColor :: (Int, Int, Int) -> Displayable
+bgColor rgb = Style "48" <> Style "2" <> hexToStyle rgb
 
-bgColor :: Text -> Displayable
-bgColor x = Style "48" <> Style "5" <> Style x
-
-bgRGB :: Int -> Int -> Int -> Displayable
-bgRGB r g b = Style "48" <> Style "2" <> Style (fromInt r) <> Style (fromInt g) <> Style (fromInt b)
+hexToStyle :: (Int, Int, Int) -> Displayable
+hexToStyle (r, g, b) = toStyle r <> toStyle g <> toStyle b
+    where
+        toStyle :: Int -> Displayable
+        toStyle = Style . fromInt
 
 fromInt :: Int -> Text
 fromInt = T.pack . show

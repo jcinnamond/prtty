@@ -1,9 +1,13 @@
 module PDL (
   parseFiles,
   parseFile,
+  fromHex,
   Expr (..),
   Presentation (..),
   TopLevelExpr (..),
+  Arg(..),
+  Args(..),
+  Hex(..),
 ) where
 
 import Data.Either (lefts, rights)
@@ -11,7 +15,7 @@ import Data.Text (Text)
 import Data.Text.IO qualified as TIO
 import Data.Void (Void)
 import Text.Megaparsec (ParseErrorBundle, parse)
-import PDL.Types (Presentation (..), Expr(..), TopLevelExpr(..))
+import PDL.Types (Presentation (..), Expr(..), TopLevelExpr(..), Hex(..), Arg(..), Args(..), fromHex)
 import PDL.Internal (parsePresentation)
 
 parseFiles :: [FilePath] -> IO (Either [ParseErrorBundle Text Void] Presentation)

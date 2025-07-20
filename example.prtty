@@ -1,11 +1,17 @@
 --- slide
+bgColor [#ffffff]
+bold
+clear
+
+color [#000000]
 cursorShow 
-"loading..."
+"loading...⏳"
 wait
 
 cursorHide
 clear
-type "this is some text"
+color [#0000ff]
+type "this is some text >= woo"
 
 --- slide
 "Some content"
