@@ -47,7 +47,7 @@ runInstruction WaitForInput = waitForInput
 runInstruction End = output NoAltBuffer
 
 output :: Displayable -> IO ()
-output = TIO.putStrLn . toText
+output = TIO.putStr . toText
 
 waitForInput :: IO ()
 waitForInput = do

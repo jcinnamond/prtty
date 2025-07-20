@@ -1,8 +1,7 @@
-this is some text
+.cursorShow 
+loading...
 .wait
+.cursorHide
 .clear
-.color 33
-hello
-.wait
-more text (does this have a newline?)
+.type this is some text
 .wait
