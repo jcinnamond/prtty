@@ -1,7 +1,11 @@
-.cursorShow 
-loading...
-.wait
-.cursorHide
-.clear
-.type this is some text
-.wait
+--- slide
+cursorShow 
+"loading..."
+wait
+
+cursorHide
+clear
+type "this is some text"
+
+--- slide
+"Some content"

@@ -3,23 +3,32 @@ module Reduce (
 ) where
 
 import Data.Text (Text)
-import Data.Text qualified as T
-import PDL (Expr (..))
-import Runtime (Duration (..), Instruction (..))
+import PDL (Presentation (..), TopLevelExpr(..))
+import Runtime (Instruction (..), Duration (..))
 import VT qualified
+import PDL.Types (Expr(..))
+import qualified Data.Text as T
 
-reduce :: [Expr] -> Either Text [Instruction]
-reduce es = case mapM reduceExpr es of
-    Left e -> Left e
-    Right is -> Right $ concat is
+reduce :: Presentation -> Either Text [Instruction]
+reduce Presentation{presentation} = concat <$> mapM reduceTopLevelExpr presentation
+
+reduceTopLevelExpr :: TopLevelExpr -> Either Text [Instruction]
+reduceTopLevelExpr (PDefinition _) = Left "not implemented"
+reduceTopLevelExpr (PSlide _ es) = reduceExprs es
+
+reduceExprs :: [Expr] -> Either Text [Instruction]
+reduceExprs es = 
+    case mapM reduceExpr es of
+        Left err -> Left err
+        Right is -> Right $ [Output VT.ClearScreen, Output VT.Home] <> concat is <> [WaitForInput]
 
 reduceExpr :: Expr -> Either Text [Instruction]
 reduceExpr (Literal x) = Right [Output $ VT.Literal $ x <> "\n"]
-reduceExpr (Instruction i es) = mapInstruction i es
+reduceExpr (Instruction i _ es) = mapInstruction i es
 
 mapInstruction :: Text -> [Expr] -> Either Text [Instruction]
-mapInstruction "cursorShow" es = Right [Output VT.ShowCursor] <> reduce es
-mapInstruction "cursorHide" es = Right [Output VT.HideCursor] <> reduce es
+mapInstruction "cursorShow" es = Right [Output VT.ShowCursor] <> reduceExprs es
+mapInstruction "cursorHide" es = Right [Output VT.HideCursor] <> reduceExprs es
 mapInstruction "wait" [] = Right [WaitForInput]
 mapInstruction "clear" [] = Right [Output VT.ClearScreen]
 mapInstruction "color" [Literal c] = Right [Output $ VT.fgColor c]

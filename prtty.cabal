@@ -32,6 +32,8 @@ library
   exposed-modules:
     Cmd
     PDL
+    PDL.Internal
+    PDL.Types
     Reduce
     Runtime
     VT
@@ -64,3 +66,4 @@ test-suite prtty-test
     hspec-megaparsec ^>=2.2.1,
     megaparsec ^>=9.7.0,
     prtty,
+    raw-strings-qq ^>=1.1,
