@@ -28,6 +28,11 @@ spec = do
         it "converts hex characters to ints" $ do
             (PDL.fromHex <$> parse "#0077ff") `shouldBe` Right (0, 119, 255)
 
+    describe "parseInt" $ do
+        let parse = M.parse PDL.parseInt ""
+        it "parses integers" $ do
+            parse "123" `shouldParse` 123
+
     describe "parseDuration" $ do
         let parse = M.parse PDL.parseDuration ""
         it "parses seconds" $ do
@@ -65,11 +70,14 @@ spec = do
             parse "[2s]" `shouldParse` PDL.Args [PDL.ArgDuration $ PDL.Seconds 2]
         it "parses a single text argument" $ do
             parse [r|["blue"]|] `shouldParse` PDL.Args [PDL.ArgText "blue"]
+        it "parses a single int argument" $ do
+            parse "[10]" `shouldParse` PDL.Args [PDL.ArgInt 10]
 
         it "parses multiple arguments" $ do
-            parse [r|["blue"; "bold"; 50ms]|]
+            parse [r|["blue"; 123; "bold"; 50ms]|]
                 `shouldParse` PDL.Args
                     [ PDL.ArgText "blue"
+                    , PDL.ArgInt 123
                     , PDL.ArgText "bold"
                     , PDL.ArgDuration $ PDL.Milliseconds 50
                     ]

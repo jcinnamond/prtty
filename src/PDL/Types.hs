@@ -1,6 +1,7 @@
 module PDL.Types where
+
+import Data.Char qualified as C
 import Data.Text (Text)
-import qualified Data.Char as C
 
 newtype Presentation = Presentation {presentation :: [TopLevelExpr]}
     deriving newtype (Show, Eq, Semigroup)
@@ -35,9 +36,10 @@ newtype Args = Args {args :: [Arg]}
     deriving stock (Show, Eq)
 
 data Arg
-    = ArgText Text
-    | ArgDuration Duration
-    | ArgHex Hex
+    = ArgText !Text
+    | ArgDuration !Duration
+    | ArgHex !Hex
+    | ArgInt !Int
     deriving stock (Show, Eq)
 
 data Duration
@@ -50,6 +52,6 @@ data Hex = Hex (Char, Char) (Char, Char) (Char, Char)
 
 fromHex :: Hex -> (Int, Int, Int)
 fromHex (Hex r g b) = (fromPair r, fromPair g, fromPair b)
-    where
-        fromPair :: (Char, Char) -> Int
-        fromPair (x, y) = C.digitToInt x * 16 + C.digitToInt y
+  where
+    fromPair :: (Char, Char) -> Int
+    fromPair (x, y) = C.digitToInt x * 16 + C.digitToInt y

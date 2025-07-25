@@ -1,4 +1,32 @@
 --- slide
+moveTo [10; 10]
+"moved and now printing"
+wait
+
+vcenter 
+"in the middle"
+wait
+clear
+
+vcenter center type "in the middle on\nmultiple lines"
+wait
+clear
+
+vcenter
+center
+"really in the middle"
+
+--- slide
+center "in the middle"
+wait 
+
+center 
+"start from center"
+wait
+
+center "actually center\nover\nmultiple lines"
+
+--- slide
 bgColor [#ffffff]
 bold
 clear
@@ -12,6 +40,3 @@ cursorHide
 clear
 color [#0000ff]
 type "this is some text >= woo"
-
---- slide
-"Some content"

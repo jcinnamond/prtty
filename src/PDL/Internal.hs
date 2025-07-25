@@ -3,10 +3,10 @@ module PDL.Internal where
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
+import PDL.Types
 import Text.Megaparsec (Parsec, between, choice, eof, many, manyTill, sepBy, some, try, (<|>))
 import Text.Megaparsec.Char (alphaNumChar, char, eol, hexDigitChar, hspace, string, symbolChar)
 import Text.Megaparsec.Char.Lexer qualified as L
-import PDL.Types
 
 type Parser = Parsec Void Text
 
@@ -69,7 +69,8 @@ parseArgs =
         hspace
             *> choice
                 [ ArgHex <$> parseHex
-                , ArgDuration <$> parseDuration
+                , try $ ArgDuration <$> parseDuration
+                , ArgInt <$> parseInt
                 , ArgText <$> parseTextLiteral
                 ]
             <* hspace
@@ -84,6 +85,9 @@ parseHex = do
     b1 <- hexDigitChar
     b2 <- hexDigitChar
     pure $ Hex (r1, r2) (g1, g2) (b1, b2)
+
+parseInt :: Parser Int
+parseInt = L.decimal
 
 parseDuration :: Parser Duration
 parseDuration =

@@ -29,7 +29,8 @@ data Displayable
     = Literal Text
     | Style Text
     | Home
-    | MoveTo Int Int
+    | MoveTo Int !Int
+    | MoveToCol !Int
     | SaveCursor
     | RestoreCursor
     | HideCursor
@@ -57,7 +58,8 @@ toText :: Displayable -> Text
 toText (Literal x) = x
 toText (Style x) = esc x "m"
 toText Home = esc "" "H"
-toText (MoveTo x y) = esc (fromInt x <> ";" <> fromInt y) "H"
+toText (MoveTo y x) = esc (fromInt y <> ";" <> fromInt x) "f"
+toText (MoveToCol x) = esc (fromInt x) "G"
 toText SaveCursor = esc "7" ""
 toText RestoreCursor = esc "8" ""
 toText HideCursor = esc "?25" "l"
@@ -93,9 +95,9 @@ bgColor rgb = Style "48" <> Style "2" <> hexToStyle rgb
 
 hexToStyle :: (Int, Int, Int) -> Displayable
 hexToStyle (r, g, b) = toStyle r <> toStyle g <> toStyle b
-    where
-        toStyle :: Int -> Displayable
-        toStyle = Style . fromInt
+  where
+    toStyle :: Int -> Displayable
+    toStyle = Style . fromInt
 
 fromInt :: Int -> Text
 fromInt = T.pack . show
