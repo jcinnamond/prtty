@@ -5,18 +5,18 @@ module PDL (
   Expr (..),
   Presentation (..),
   TopLevelExpr (..),
-  Arg(..),
-  Args(..),
-  Hex(..),
+  Arg (..),
+  Args (..),
+  Hex (..),
 ) where
 
 import Data.Either (lefts, rights)
 import Data.Text (Text)
 import Data.Text.IO qualified as TIO
 import Data.Void (Void)
-import Text.Megaparsec (ParseErrorBundle, parse)
-import PDL.Types (Presentation (..), Expr(..), TopLevelExpr(..), Hex(..), Arg(..), Args(..), fromHex)
 import PDL.Internal (parsePresentation)
+import PDL.Types (Arg (..), Args (..), Expr (..), Hex (..), Presentation (..), TopLevelExpr (..), fromHex)
+import Text.Megaparsec (ParseErrorBundle, parse)
 
 parseFiles :: [FilePath] -> IO (Either [ParseErrorBundle Text Void] Presentation)
 parseFiles ps = do

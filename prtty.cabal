@@ -31,18 +31,21 @@ library
   -- cabal-gild: discover src
   exposed-modules:
     Cmd
+    Options
     PDL
     PDL.Internal
     PDL.Types
+    PrettyPrint
     Reduce
     Runtime
     VT
 
   build-depends:
     megaparsec ^>=9.7.0,
-    unix ^>=2.8.7.0,
     mtl ^>=2.3.1,
-    terminal-size ^>= 0.3.4
+    optparse-applicative ^>=0.19.0.0,
+    terminal-size ^>=0.3.4,
+    unix ^>=2.8.7.0,
 
 executable prtty-app
   import: shared
@@ -50,6 +53,8 @@ executable prtty-app
   hs-source-dirs: app
   ghc-options: -threaded
   build-depends:
+    mtl ^>=2.3.1,
+    optparse-applicative ^>=0.19.0.0,
     prtty,
     unix ^>=2.8.7.0,
 

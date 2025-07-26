@@ -11,6 +11,7 @@ import Control.Monad.Reader (ReaderT (..), asks)
 import Data.ByteString.Char8 (ByteString)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
+import PrettyPrint (PrettyPrint (..))
 import System.Console.Terminal.Size qualified as TSize
 import System.IO (BufferMode (..), hFlush, hSetBuffering, hSetEcho, stdin, stdout)
 import VT (Displayable (AltBuffer, ClearScreen, HideCursor, Home, NoAltBuffer, ShowCursor), toText)
@@ -26,6 +27,9 @@ data Instruction
     | MoveTo !Int !Int
     | End
     deriving stock (Show, Eq)
+
+instance PrettyPrint Instruction where
+    pretty i = T.show i <> "\n"
 
 data Duration = Second Int | Millisecond Int
     deriving stock (Show, Eq)
