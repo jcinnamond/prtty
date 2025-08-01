@@ -35,9 +35,12 @@ library
     PDL
     PDL.Internal
     PDL.Types
+    Parser.AST
+    Parser.Internal
     PrettyPrint
     Reduce
     Runtime
+    Runtime.Duration
     VT
 
   build-depends:
@@ -66,6 +69,7 @@ test-suite prtty-test
   build-tool-depends: hspec-discover:hspec-discover >=2 && <3
   other-modules:
     PDLSpec
+    ParserSpec
     VTSpec
 
   build-depends:
