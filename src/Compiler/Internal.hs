@@ -1,0 +1,67 @@
+module Compiler.Internal where
+
+import Data.Map (Map)
+import Data.Map qualified as M
+import Data.Text (Text)
+import Data.Text qualified as T
+import Data.Vector (Vector)
+import Data.Vector qualified as V
+import Parser.AST qualified as AST
+import Runtime.Instructions (Instruction)
+import Runtime.Instructions qualified as Runtime
+import VT qualified
+
+type Compiler = Either Text (Vector Instruction)
+
+compileExpression :: AST.Expr -> Compiler
+compileExpression (AST.Literal t) = pure $ V.singleton $ Runtime.Output t
+compileExpression (AST.Call name args body) = compileBuiltin name args body
+
+compileBuiltin :: Text -> [AST.Arg] -> [AST.Expr] -> Compiler
+compileBuiltin "clear" = standalone "clear" compileClear
+compileBuiltin "home" = standalone "home" $ V.singleton Runtime.Home
+compileBuiltin "margin" = compileMargin
+compileBuiltin "nl" = standalone "nl" $ V.singleton $ Runtime.Output "\n"
+compileBuiltin "wait" = standalone "wait" compileWait
+compileBuiltin x = unrecognised x
+
+compileClear :: Vector Instruction
+compileClear = V.fromList [Runtime.StoreBackMarker, Runtime.Output VT.clear, Runtime.Home]
+
+compileWait :: Vector Instruction
+compileWait = V.singleton Runtime.WaitForInput
+
+compileMargin :: [AST.Arg] -> [AST.Expr] -> Compiler
+compileMargin args [] = do
+    left <- margin "left" Runtime.SetLeftMargin
+    top <- margin "top" Runtime.SetTopMargin
+    let combined = left <> top
+    if V.null combined
+        then Left "no margins provided"
+        else pure combined
+  where
+    margin :: Text -> (Runtime.Numerical -> Instruction) -> Compiler
+    margin k f = case M.lookup k ma of
+        Nothing -> pure V.empty
+        Just (AST.ArgNumber x) -> pure $ V.singleton $ f $ Runtime.Number x
+        Just (AST.ArgPercentage x) -> pure $ V.singleton $ f $ Runtime.Percent x
+        Just (AST.ArgRational n d) -> pure $ V.singleton $ f $ Runtime.Rational n d
+        Just v -> Left $ "unsupported left margin type: " <> T.show v
+
+    ma :: Map Text AST.ArgValue
+    ma = M.fromList $ map (\(AST.Arg name v) -> (name, v)) args
+compileMargin _ body = Left $ "'margin' does not take a body but got: " <> T.show body
+
+standalone :: Text -> Vector Instruction -> [AST.Arg] -> [AST.Expr] -> Compiler
+standalone name = withNoArgs name . withNoBody name
+
+withNoArgs :: Text -> ([AST.Expr] -> Compiler) -> [AST.Arg] -> ([AST.Expr] -> Compiler)
+withNoArgs _ f [] = f
+withNoArgs name _ args = const $ Left $ "unexpected args when calling '" <> name <> "': " <> T.show args
+
+withNoBody :: Text -> Vector Instruction -> [AST.Expr] -> Compiler
+withNoBody _ f [] = pure f
+withNoBody name _ body = Left $ "unexpected args when calling '" <> name <> "': " <> T.show body
+
+unrecognised :: Text -> [AST.Arg] -> [AST.Expr] -> Compiler
+unrecognised name args body = Left $ "unrecognised '" <> name <> "': " <> T.show args <> " {" <> T.show body <> "}"

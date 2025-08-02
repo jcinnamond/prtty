@@ -8,7 +8,7 @@ import Data.Void (Void)
 import Parser.AST (Arg (..), ArgValue (..), Expr (..), Presentation (..))
 import Runtime.Duration (Duration (..))
 import Text.Megaparsec (MonadParsec (notFollowedBy, takeWhile1P), Parsec, between, choice, eof, many, satisfy, sepBy, sepBy1, some, try, (<|>))
-import Text.Megaparsec.Char (alphaNumChar, char, hexDigitChar, hspace, space, string)
+import Text.Megaparsec.Char (alphaNumChar, char, eol, hexDigitChar, hspace, space, string)
 import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
@@ -17,7 +17,7 @@ presentation :: Parser Presentation
 presentation = Presentation . concat <$> many expressionChain <* eof
 
 expressionChain :: Parser [Expr]
-expressionChain = expression `sepBy1` (hspace <* char '<' <* hspace)
+expressionChain = expression `sepBy1` (hspace <* char '<' <* hspace) <* many eol
 
 expression :: Parser Expr
 expression =

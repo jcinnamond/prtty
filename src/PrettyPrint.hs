@@ -7,6 +7,8 @@ module PrettyPrint (
 
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Vector (Vector)
+import Data.Vector qualified as V
 
 class PrettyPrint a where
     prettyIndent :: Text -> a -> Text
@@ -27,3 +29,6 @@ class Empty a where
 
 instance Empty [a] where
     empty = []
+
+instance Empty (Vector a) where
+    empty = V.empty

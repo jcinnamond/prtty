@@ -18,12 +18,36 @@ module VT (
     white,
     fgColor,
     bgColor,
+    -- Let's try something new
+    clear,
+    moveTo,
+    altBuffer,
+    noAltBuffer,
+    hideCursor,
+    showCursor,
 )
 where
 
 import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as T
+
+esc' :: Text
+esc' = "\x1b["
+
+clear :: Text
+clear = esc' <> "2J"
+
+moveTo :: Int -> Int -> Text
+moveTo y x = esc' <> fromInt y <> ";" <> fromInt x <> "f"
+
+altBuffer, noAltBuffer :: Text
+altBuffer = esc' <> "?1049h"
+noAltBuffer = esc' <> "?1049l"
+
+hideCursor, showCursor :: Text
+hideCursor = esc' <> "?25l"
+showCursor = esc' <> "?25h"
 
 data Displayable
     = Literal Text

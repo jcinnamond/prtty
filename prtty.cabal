@@ -13,6 +13,7 @@ common shared
     base ^>=4.21.0.0,
     bytestring ^>=0.12.1.0,
     text ^>=2.1.1,
+    vector ^>=0.13.2.0,
 
   default-language: GHC2021
   default-extensions:
@@ -31,19 +32,25 @@ library
   -- cabal-gild: discover src
   exposed-modules:
     Cmd
+    Compiler.Compiler
+    Compiler.Internal
     Options
     PDL
     PDL.Internal
     PDL.Types
     Parser.AST
     Parser.Internal
+    Parser.Parser
     PrettyPrint
     Reduce
     Runtime
     Runtime.Duration
+    Runtime.Instructions
+    Runtime.Run
     VT
 
   build-depends:
+    containers ^>=0.7,
     megaparsec ^>=9.7.0,
     mtl ^>=2.3.1,
     optparse-applicative ^>=0.19.0.0,
@@ -68,6 +75,7 @@ test-suite prtty-test
   main-is: Spec.hs
   build-tool-depends: hspec-discover:hspec-discover >=2 && <3
   other-modules:
+    CompilerSpec
     PDLSpec
     ParserSpec
     VTSpec

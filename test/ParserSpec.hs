@@ -156,6 +156,10 @@ parsePresentation = do
         it "parses a single call" $ do
             parse ".clear" `shouldParse` AST.Presentation [AST.Call "clear" [] []]
 
+        it "ignores tailing lines" $ do
+            parse "some text\n" `shouldParse` AST.Presentation [AST.Literal "some text"]
+            parse "some text\n\n" `shouldParse` AST.Presentation [AST.Literal "some text"]
+
         it "parses expressions separated by <" $ do
             parse ".nl < .nl < some text"
                 `shouldParse` AST.Presentation
