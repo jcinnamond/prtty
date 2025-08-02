@@ -3,6 +3,7 @@ module CompilerSpec (spec) where
 import Compiler.Internal (compileExpression)
 import Data.Vector qualified as V
 import Parser.AST qualified as AST
+import Runtime.Duration qualified as Duration
 import Runtime.Instructions qualified as Runtime
 import Test.Hspec (Expectation, Spec, describe, focus, it, shouldBe)
 import VT qualified
@@ -68,6 +69,19 @@ compileBuiltinSpec = do
                               , Runtime.Output "there"
                               , Runtime.Newline
                               ]
+        AST.Call "center" [] [AST.Call "type" [] [AST.Literal "hello"]]
+            `shouldCompileTo` [ Runtime.Center 5
+                              , Runtime.Output "h"
+                              , Runtime.Pause (Duration.Milliseconds 50)
+                              , Runtime.Output "e"
+                              , Runtime.Pause (Duration.Milliseconds 50)
+                              , Runtime.Output "l"
+                              , Runtime.Pause (Duration.Milliseconds 50)
+                              , Runtime.Output "l"
+                              , Runtime.Pause (Duration.Milliseconds 50)
+                              , Runtime.Output "o"
+                              , Runtime.Pause (Duration.Milliseconds 50)
+                              ]
 
     it "compiles 'vcenter'" $ do
         AST.Call "vcenter" [] [] `shouldCompileTo` [Runtime.VCenter 0]
@@ -86,6 +100,34 @@ compileBuiltinSpec = do
                               , Runtime.Output "there"
                               , Runtime.Newline
                               ]
+
+    describe "'type'" $ do
+        it "compiles with a default pause time" $ do
+            AST.Call "type" [] [AST.Literal "hi there"]
+                `shouldCompileTo` [ Runtime.Output "h"
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  , Runtime.Output "i"
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  , Runtime.Output " "
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  , Runtime.Output "t"
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  , Runtime.Output "h"
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  , Runtime.Output "r"
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Duration.Milliseconds 50)
+                                  ]
+        it "compiles with a custom delay" $ do
+            AST.Call "type" [AST.Arg "delay" (AST.ArgDuration (Duration.Seconds 1))] [AST.Literal "hi"]
+                `shouldCompileTo` [ Runtime.Output "h"
+                                  , Runtime.Pause (Duration.Seconds 1)
+                                  , Runtime.Output "i"
+                                  , Runtime.Pause (Duration.Seconds 1)
+                                  ]
 
 shouldCompileTo :: AST.Expr -> [Runtime.Instruction] -> Expectation
 shouldCompileTo expr is = compileExpression expr `shouldBe` Right (V.fromList is)

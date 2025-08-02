@@ -1,5 +1,5 @@
 .clear
-.center << hello
+.vcenter << .center << .type << this is a title slide
 .wait
 
 .clear
@@ -24,7 +24,8 @@
 .vcenter
     centered
     .nl
-    with a small margin
+    .wait
+    .type << with a small margin
 .wait
 
 .clear

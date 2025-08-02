@@ -5,6 +5,7 @@ module Runtime.Instructions (
 ) where
 
 import Data.Text (Text)
+import Runtime.Duration (Duration)
 
 data Instruction
     = Output Text
@@ -16,6 +17,7 @@ data Instruction
     | WaitForInput
     | VCenter Int
     | Center Int
+    | Pause Duration
     deriving stock (Show, Eq)
 
 data Numerical

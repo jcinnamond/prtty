@@ -1,5 +1,6 @@
 module Runtime.Run (run) where
 
+import Control.Concurrent (threadDelay)
 import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.State (StateT, execStateT, gets, modify)
@@ -7,6 +8,7 @@ import Data.Text (Text)
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
 import Data.Vector qualified as V
+import Runtime.Duration (Duration (..))
 import Runtime.Instructions (Instruction (..), Numerical (..), RGB (..))
 import System.Console.Terminal.Size qualified as TSize
 import System.IO (BufferMode (..), hFlush, hSetBuffering, hSetEcho, stdin, stdout)
@@ -100,17 +102,27 @@ runInstruction (SetTopMargin x) = modify $ setTopMargin x
 runInstruction (SetLeftMargin x) = modify $ setLeftMargin x
 runInstruction (Center x) = runCenter x
 runInstruction (VCenter x) = runVCenter x
-runInstruction Home = do
-    y <- gets topMargin
-    x <- gets leftMargin
-    out $ VT.moveTo y x
-    nochange
-runInstruction WaitForInput = do
+runInstruction Home = runHome
+runInstruction WaitForInput = runWaitForInput
+runInstruction (Pause d) = liftIO $ runPause d
+
+runPause :: Duration -> IO ()
+runPause (Seconds x) = threadDelay (x * 1_000_000)
+runPause (Milliseconds x) = threadDelay (x * 1_000)
+
+runWaitForInput :: Runtime
+runWaitForInput = do
     c <- liftIO getChar
     case c of
         'b' -> runMoveBack
         'q' -> modify stop
         _ -> nochange
+
+runHome :: Runtime
+runHome = do
+    y <- gets topMargin
+    x <- gets leftMargin
+    out $ VT.moveTo y x
 
 runCenter :: Int -> Runtime
 runCenter x = do
@@ -123,7 +135,6 @@ runNewline = do
     margin <- gets leftMargin
     out "\n"
     when (margin > 1) $ out $ VT.moveRight $ margin - 1
-    nochange
 
 runVCenter :: Int -> Runtime
 runVCenter x = do

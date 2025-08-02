@@ -7,6 +7,7 @@ import Data.Text qualified as T
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Parser.AST qualified as AST
+import Runtime.Duration qualified as Duration
 import Runtime.Instructions (Instruction)
 import Runtime.Instructions qualified as Runtime
 import VT qualified
@@ -29,7 +30,29 @@ compileBuiltin "nl" = standalone "nl" $ V.singleton $ Runtime.Output "\n"
 compileBuiltin "wait" = standalone "wait" compileWait
 compileBuiltin "center" = withNoArgs "center" compileCenter
 compileBuiltin "vcenter" = withNoArgs "vcenter" compileVCenter
+compileBuiltin "type" = compileType
 compileBuiltin x = unrecognised x
+
+compileType :: [AST.Arg] -> [AST.Expr] -> Compiler
+compileType args [AST.Literal t] = do
+    pause <- getPause
+    pure $
+        T.foldl'
+            ( \is c ->
+                is <> V.cons (Runtime.Output $ T.singleton c) pause
+            )
+            V.empty
+            t
+  where
+    getPause :: Compiler
+    getPause = case M.lookup "delay" ma of
+        Nothing -> pure $ V.singleton $ Runtime.Pause $ Duration.Milliseconds 50
+        (Just (AST.ArgDuration x)) -> pure $ V.singleton $ Runtime.Pause x
+        _ -> Left "'type' only accepts a duration argument"
+
+    ma :: Map Text AST.ArgValue
+    ma = M.fromList $ map (\(AST.Arg name v) -> (name, v)) args
+compileType _ _ = Left "type only accepts a single literal"
 
 compileCenter :: [AST.Expr] -> Compiler
 compileCenter exprs = compileWithBody (Runtime.Center (width exprs)) exprs
@@ -37,7 +60,7 @@ compileCenter exprs = compileWithBody (Runtime.Center (width exprs)) exprs
     width [] = 0
     width (AST.Newline : xs) = width xs
     width (AST.Literal l : xs) = T.length l + width xs
-    width (AST.Call _ _ body : xs) = length body + length xs
+    width (AST.Call _ _ body : xs) = width body + length xs
 
 compileVCenter :: [AST.Expr] -> Compiler
 compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs
