@@ -32,7 +32,13 @@ compileBuiltin "center" = withNoArgs "center" compileCenter
 compileBuiltin "vcenter" = withNoArgs "vcenter" compileVCenter
 compileBuiltin "type" = compileType
 compileBuiltin "style" = compileStyle
+compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin x = unrecognised x
+
+compileSlide :: [AST.Expr] -> Compiler
+compileSlide body = do
+    rest <- compileExpressions body
+    pure $ compileClear <> rest <> compileWait
 
 compileType :: AST.Args -> [AST.Expr] -> Compiler
 compileType args [AST.Literal t] = do

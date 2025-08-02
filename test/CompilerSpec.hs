@@ -37,6 +37,24 @@ compileBuiltinSpec = do
     it "compiles 'wait'" $ do
         AST.Call "wait" M.empty [] `shouldCompileTo` [Runtime.WaitForInput]
 
+    it "compiles slides" $ do
+        AST.Call
+            "slide"
+            M.empty
+            [ AST.Call
+                "vcenter"
+                M.empty
+                [ AST.Literal "title"
+                ]
+            ]
+            `shouldCompileTo` [ Runtime.StoreBackMarker
+                              , Runtime.Output VT.clear
+                              , Runtime.Home
+                              , Runtime.VCenter 0
+                              , Runtime.Output "title"
+                              , Runtime.WaitForInput
+                              ]
+
     describe "compile 'margin'" $ do
         it "compiles a left margin" $ do
             AST.Call "margin" (M.fromList [("left", Runtime.Percentage 10)]) [] `shouldCompileTo` [Runtime.SetLeftMargin $ Runtime.Percentage 10]

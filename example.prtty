@@ -1,47 +1,41 @@
 .style [ bg=#0295b6; fg=#f5f500]
-.clear
-.vcenter << .center << .type << this is a title slide
-.wait
+.slide
+    .vcenter << .center << .type << this is a title slide
 
-.clear
-.vcenter 
-    hello
+.slide
+    .vcenter 
+        hello
+        .nl
+        this is 
+        .style [fg=#ff0000; bold] 
+            some 
+            .type [delay=200ms] << very important 
+        content
+        .nl
+        vcentered
+
+.slide
+    .vcenter
+        .margin[top=1/3;left=1/5]
+        .vcenter
+            centered with margins
+            .nl
+            .style [bold] << over multiple lines
+            .nl
+            no more bold
+
+.slide
+    .margin[left=2]
+    .vcenter
+        centered
+        .nl
+        .wait
+        .type << with a small margin
+
+    .clear
+    new text 
+
+    even more text
+
     .nl
-    this is 
-    .style [fg=#ff0000; bold] 
-        some 
-        .type [delay=200ms] << very important 
-    content
-    .nl
-    vcentered
-.wait
-
-.clear
-.margin[top=1/3;left=1/5]
-.vcenter
-    centered with margins
-    .nl
-    .style [bold] << over multiple lines
-    .nl
-    no more bold
-.wait
-
-.clear
-.margin[left=2]
-.vcenter
-    centered
-    .nl
-    .wait
-    .type << with a small margin
-.wait
-
-.clear
-new text 
-.wait
-
-even more text
-.wait
-
-.nl
-over another line
-.wait
+    over another line
