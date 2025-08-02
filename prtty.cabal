@@ -44,7 +44,6 @@ library
     Parser.Internal
     Parser.Parser
     PrettyPrint
-    Runtime
     Runtime.Instructions
     Runtime.Run
     Runtime.Value
