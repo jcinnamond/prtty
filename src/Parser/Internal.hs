@@ -2,11 +2,12 @@ module Parser.Internal where
 
 import Data.Char (isPrint, isSpace)
 import Data.Char qualified as C
+import Data.Map qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
-import Parser.AST (Arg (..), Expr (..), Presentation (..))
-import Runtime.Value (Duration (..))
+import Parser.AST (Args, Expr (..), Presentation (..))
+import Runtime.Value (Duration (..), Value)
 import Runtime.Value qualified as Value
 import Text.Megaparsec (MonadParsec (notFollowedBy, takeWhile1P), Parsec, between, choice, eof, many, satisfy, sepBy, sepBy1, some, try, (<|>))
 import Text.Megaparsec.Char (alphaNumChar, char, eol, hexDigitChar, hspace, space, string)
@@ -43,17 +44,18 @@ call = L.indentBlock space p
 identifier :: Parser Text
 identifier = T.pack <$> some alphaNumChar
 
-args :: Parser [Arg]
-args = matchArgs <|> pure []
+args :: Parser Args
+args = matchArgs <|> pure M.empty
   where
-    matchArgs :: Parser [Arg]
+    matchArgs :: Parser Args
     matchArgs =
-        between
-            (char '[')
-            (char ']')
-            (matchArg `sepBy` char ';')
+        M.fromList
+            <$> between
+                (char '[')
+                (char ']')
+                (matchArg `sepBy` char ';')
 
-    matchArg :: Parser Arg
+    matchArg :: Parser (Text, Value)
     matchArg = do
         name <- hspace *> identifier <* hspace
         _ <- char '=' <* hspace
@@ -67,7 +69,7 @@ args = matchArgs <|> pure []
                 , Value.Literal <$> identifier
                 ]
         _ <- hspace
-        pure $ Arg name v
+        pure (name, v)
 
     uncurry3 :: forall a b c d. (a -> b -> c -> d) -> (a, b, c) -> d
     uncurry3 f (x, y, z) = f x y z

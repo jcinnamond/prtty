@@ -1,6 +1,5 @@
 module Compiler.Internal where
 
-import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -23,7 +22,7 @@ compileExpression (AST.Literal t) = pure $ V.singleton $ Runtime.Output t
 compileExpression AST.Newline = pure $ V.singleton Runtime.Newline
 compileExpression (AST.Call name args body) = compileBuiltin name args body
 
-compileBuiltin :: Text -> [AST.Arg] -> [AST.Expr] -> Compiler
+compileBuiltin :: Text -> AST.Args -> [AST.Expr] -> Compiler
 compileBuiltin "clear" = standalone "clear" compileClear
 compileBuiltin "home" = standalone "home" $ V.singleton Runtime.Home
 compileBuiltin "margin" = compileMargin
@@ -34,7 +33,7 @@ compileBuiltin "vcenter" = withNoArgs "vcenter" compileVCenter
 compileBuiltin "type" = compileType
 compileBuiltin x = unrecognised x
 
-compileType :: [AST.Arg] -> [AST.Expr] -> Compiler
+compileType :: AST.Args -> [AST.Expr] -> Compiler
 compileType args [AST.Literal t] = do
     pause <- getPause
     pure $
@@ -46,13 +45,10 @@ compileType args [AST.Literal t] = do
             t
   where
     getPause :: Compiler
-    getPause = case M.lookup "delay" ma of
+    getPause = case M.lookup "delay" args of
         Nothing -> pure $ V.singleton $ Runtime.Pause $ Runtime.Milliseconds 50
         (Just (Runtime.Duration x)) -> pure $ V.singleton $ Runtime.Pause x
         _ -> Left "'type' only accepts a duration argument"
-
-    ma :: Map Text Value
-    ma = M.fromList $ map (\(AST.Arg name v) -> (name, v)) args
 compileType _ _ = Left "type only accepts a single literal"
 
 compileCenter :: [AST.Expr] -> Compiler
@@ -78,7 +74,7 @@ compileClear = V.fromList [Runtime.StoreBackMarker, Runtime.Output VT.clear, Run
 compileWait :: Vector Instruction
 compileWait = V.singleton Runtime.WaitForInput
 
-compileMargin :: [AST.Arg] -> [AST.Expr] -> Compiler
+compileMargin :: AST.Args -> [AST.Expr] -> Compiler
 compileMargin args [] = do
     left <- margin "left" Runtime.SetLeftMargin
     top <- margin "top" Runtime.SetTopMargin
@@ -88,23 +84,21 @@ compileMargin args [] = do
         else pure combined
   where
     margin :: Text -> (Value -> Instruction) -> Compiler
-    margin k f = case M.lookup k ma of
+    margin k f = case M.lookup k args of
         Nothing -> pure V.empty
         Just (Runtime.Number x) -> pure $ V.singleton $ f $ Runtime.Number x
         Just (Runtime.Percentage x) -> pure $ V.singleton $ f $ Runtime.Percentage x
         Just (Runtime.Rational n d) -> pure $ V.singleton $ f $ Runtime.Rational n d
         Just v -> Left $ "unsupported left margin type: " <> T.show v
-
-    ma :: Map Text Value
-    ma = M.fromList $ map (\(AST.Arg name v) -> (name, v)) args
 compileMargin _ body = Left $ "'margin' does not take a body but got: " <> T.show body
 
-standalone :: Text -> Vector Instruction -> [AST.Arg] -> [AST.Expr] -> Compiler
+standalone :: Text -> Vector Instruction -> AST.Args -> [AST.Expr] -> Compiler
 standalone name = withNoArgs name . withNoBody name
 
-withNoArgs :: Text -> ([AST.Expr] -> Compiler) -> [AST.Arg] -> ([AST.Expr] -> Compiler)
-withNoArgs _ f [] = f
-withNoArgs name _ args = const $ Left $ "unexpected args when calling '" <> name <> "': " <> T.show args
+withNoArgs :: Text -> ([AST.Expr] -> Compiler) -> AST.Args -> ([AST.Expr] -> Compiler)
+withNoArgs name f args
+    | M.null args = f
+    | otherwise = const $ Left $ "unexpected args when calling '" <> name <> "': " <> T.show args
 
 withNoBody :: Text -> Vector Instruction -> [AST.Expr] -> Compiler
 withNoBody _ f [] = pure f
@@ -114,5 +108,5 @@ compileWithBody :: Instruction -> [AST.Expr] -> Compiler
 compileWithBody i [] = pure $ V.singleton i
 compileWithBody i body = V.cons i <$> compileExpressions body
 
-unrecognised :: Text -> [AST.Arg] -> [AST.Expr] -> Compiler
+unrecognised :: Text -> AST.Args -> [AST.Expr] -> Compiler
 unrecognised name args body = Left $ "unrecognised '" <> name <> "': " <> T.show args <> " {" <> T.show body <> "}"

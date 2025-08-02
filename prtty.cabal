@@ -12,6 +12,7 @@ common shared
   build-depends:
     base ^>=4.21.0.0,
     bytestring ^>=0.12.1.0,
+    containers ^>=0.7,
     text ^>=2.1.1,
     vector ^>=0.13.2.0,
 
@@ -50,7 +51,6 @@ library
     VT
 
   build-depends:
-    containers ^>=0.7,
     megaparsec ^>=9.7.0,
     mtl ^>=2.3.1,
     optparse-applicative ^>=0.19.0.0,

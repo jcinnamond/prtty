@@ -2,9 +2,10 @@ module Parser.AST (
     Expr (..),
     Presentation (..),
     Number (..),
-    Arg (..),
+    Args,
 ) where
 
+import Data.Map (Map)
 import Data.Text
 import PrettyPrint (Empty, PrettyPrint)
 import Runtime.Value
@@ -15,7 +16,7 @@ newtype Presentation = Presentation {presentation :: [Expr]}
 data Expr
     = Literal Text
     | Newline
-    | Call Text [Arg] [Expr]
+    | Call Text Args [Expr]
     deriving stock (Show, Eq)
 
 data Number
@@ -24,5 +25,4 @@ data Number
     | Percentage Int
     deriving stock (Show, Eq)
 
-data Arg = Arg Text Value
-    deriving stock (Show, Eq)
+type Args = Map Text Value
