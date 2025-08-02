@@ -4,7 +4,7 @@ module ParserSpec (spec) where
 
 import Parser.AST qualified as AST
 import Parser.Internal qualified as Parser
-import Runtime.Duration (Duration (..))
+import Runtime.Value qualified as Runtime
 import Test.Hspec (Spec, describe, focus, it)
 import Test.Hspec.Megaparsec (shouldFailOn, shouldParse)
 import Text.Megaparsec qualified as M
@@ -56,34 +56,34 @@ parseArgs = do
     describe "args" $ do
         let parse = M.parse Parser.args ""
         it "parses integers" $ do
-            parse "[x=10]" `shouldParse` [AST.Arg "x" (AST.ArgNumber 10)]
-            parse "[ x = 10 ]" `shouldParse` [AST.Arg "x" (AST.ArgNumber 10)]
+            parse "[x=10]" `shouldParse` [AST.Arg "x" (Runtime.Number 10)]
+            parse "[ x = 10 ]" `shouldParse` [AST.Arg "x" (Runtime.Number 10)]
         it "parses rationals" $ do
-            parse "[left=1/3]" `shouldParse` [AST.Arg "left" (AST.ArgRational 1 3)]
-            parse "[left = 1/3]" `shouldParse` [AST.Arg "left" (AST.ArgRational 1 3)]
-            parse "[left= 1 / 3]" `shouldParse` [AST.Arg "left" (AST.ArgRational 1 3)]
+            parse "[left=1/3]" `shouldParse` [AST.Arg "left" (Runtime.Rational 1 3)]
+            parse "[left = 1/3]" `shouldParse` [AST.Arg "left" (Runtime.Rational 1 3)]
+            parse "[left= 1 / 3]" `shouldParse` [AST.Arg "left" (Runtime.Rational 1 3)]
         it "parses percentages" $ do
-            parse "[left=50%]" `shouldParse` [AST.Arg "left" (AST.ArgPercentage 50)]
-            parse "[left = 50%]" `shouldParse` [AST.Arg "left" (AST.ArgPercentage 50)]
+            parse "[left=50%]" `shouldParse` [AST.Arg "left" (Runtime.Percentage 50)]
+            parse "[left = 50%]" `shouldParse` [AST.Arg "left" (Runtime.Percentage 50)]
         it "parses durations" $ do
-            parse "[delay=5s]" `shouldParse` [AST.Arg "delay" (AST.ArgDuration (Seconds 5))]
-            parse "[delay=30ms]" `shouldParse` [AST.Arg "delay" (AST.ArgDuration (Milliseconds 30))]
+            parse "[delay=5s]" `shouldParse` [AST.Arg "delay" (Runtime.Duration (Runtime.Seconds 5))]
+            parse "[delay=30ms]" `shouldParse` [AST.Arg "delay" (Runtime.Duration (Runtime.Milliseconds 30))]
         it "parses rgb hex codes" $ do
-            parse "[color=#aa107f]" `shouldParse` [AST.Arg "color" (AST.ArgRGB 170 16 127)]
-            parse "[color=#AA107F]" `shouldParse` [AST.Arg "color" (AST.ArgRGB 170 16 127)]
+            parse "[color=#aa107f]" `shouldParse` [AST.Arg "color" (Runtime.RGB 170 16 127)]
+            parse "[color=#AA107F]" `shouldParse` [AST.Arg "color" (Runtime.RGB 170 16 127)]
         it "parses literals" $ do
-            parse "[align=center]" `shouldParse` [AST.Arg "align" (AST.ArgLiteral "center")]
-            parse "[align= center ]" `shouldParse` [AST.Arg "align" (AST.ArgLiteral "center")]
+            parse "[align=center]" `shouldParse` [AST.Arg "align" (Runtime.Literal "center")]
+            parse "[align= center ]" `shouldParse` [AST.Arg "align" (Runtime.Literal "center")]
 
         it "parses multiple args" $ do
             parse "[x=1/3;y=2]"
-                `shouldParse` [ AST.Arg "x" (AST.ArgRational 1 3)
-                              , AST.Arg "y" (AST.ArgNumber 2)
+                `shouldParse` [ AST.Arg "x" (Runtime.Rational 1 3)
+                              , AST.Arg "y" (Runtime.Number 2)
                               ]
             parse "[ align = left ; offset = 10% ; delay = 10s ]"
-                `shouldParse` [ AST.Arg "align" (AST.ArgLiteral "left")
-                              , AST.Arg "offset" (AST.ArgPercentage 10)
-                              , AST.Arg "delay" (AST.ArgDuration (Seconds 10))
+                `shouldParse` [ AST.Arg "align" (Runtime.Literal "left")
+                              , AST.Arg "offset" (Runtime.Percentage 10)
+                              , AST.Arg "delay" (Runtime.Duration (Runtime.Seconds 10))
                               ]
 
 parseCall :: Spec
@@ -96,7 +96,7 @@ parseCall = do
             parse ".style [color=#0000ff]"
                 `shouldParse` AST.Call
                     "style"
-                    [AST.Arg "color" (AST.ArgRGB 0 0 255)]
+                    [AST.Arg "color" (Runtime.RGB 0 0 255)]
                     []
 
         it "parses functions with <<" $ do
@@ -142,7 +142,7 @@ parseCall = do
             parse ".style [color=#00ffff] << .type < some text"
                 `shouldParse` AST.Call
                     "style"
-                    [AST.Arg "color" (AST.ArgRGB 0 255 255)]
+                    [AST.Arg "color" (Runtime.RGB 0 255 255)]
                     [ AST.Call "type" [] []
                     , AST.Literal "some text"
                     ]
@@ -183,7 +183,7 @@ parsePresentation = do
                     , AST.Call "vcenter" [] []
                     , AST.Call
                         "color"
-                        [AST.Arg "name" (AST.ArgLiteral "blue")]
+                        [AST.Arg "name" (Runtime.Literal "blue")]
                         [ AST.Literal "heading"
                         ]
                     , AST.Newline
@@ -218,7 +218,7 @@ parsePresentation = do
                                 [ AST.Call "bold" [] []
                                 , AST.Call "type" [] [AST.Literal "A presentation"]
                                 ]
-                            , AST.Call "pause" [AST.Arg "delay" (AST.ArgDuration (Seconds 1))] []
+                            , AST.Call "pause" [AST.Arg "delay" (Runtime.Duration (Runtime.Seconds 1))] []
                             , AST.Newline
                             , AST.Newline
                             , AST.Call

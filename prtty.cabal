@@ -44,9 +44,9 @@ library
     PrettyPrint
     Reduce
     Runtime
-    Runtime.Duration
     Runtime.Instructions
     Runtime.Run
+    Runtime.Value
     VT
 
   build-depends:

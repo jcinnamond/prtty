@@ -8,8 +8,8 @@ import Data.Text (Text)
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
 import Data.Vector qualified as V
-import Runtime.Duration (Duration (..))
-import Runtime.Instructions (Instruction (..), Numerical (..), RGB (..))
+import Runtime.Instructions (Instruction (..))
+import Runtime.Value (Value (..), nanoseconds)
 import System.Console.Terminal.Size qualified as TSize
 import System.IO (BufferMode (..), hFlush, hSetBuffering, hSetEcho, stdin, stdout)
 import VT qualified
@@ -30,13 +30,6 @@ data Environment = Environment
     -- ^ the width of the terminal, in characters
     , topMargin :: Int
     , leftMargin :: Int
-    , style :: Style
-    }
-    deriving stock (Show, Eq)
-
-data Style = Style
-    { fgColor :: RGB
-    , bgColor :: RGB
     }
     deriving stock (Show, Eq)
 
@@ -56,11 +49,6 @@ newEnvironment is = do
             , width = twidth
             , topMargin = 0
             , leftMargin = 0
-            , style =
-                Style
-                    { fgColor = RGB 255 255 255
-                    , bgColor = RGB 0 0 0
-                    }
             }
 
 run :: Vector Instruction -> IO ()
@@ -104,11 +92,7 @@ runInstruction (Center x) = runCenter x
 runInstruction (VCenter x) = runVCenter x
 runInstruction Home = runHome
 runInstruction WaitForInput = runWaitForInput
-runInstruction (Pause d) = liftIO $ runPause d
-
-runPause :: Duration -> IO ()
-runPause (Seconds x) = threadDelay (x * 1_000_000)
-runPause (Milliseconds x) = threadDelay (x * 1_000)
+runInstruction (Pause d) = liftIO $ threadDelay $ nanoseconds d
 
 runWaitForInput :: Runtime
 runWaitForInput = do
@@ -171,16 +155,17 @@ moveBack lj bm e =
 storeBackMarker :: Environment -> Environment
 storeBackMarker e = e{backMarkers = e.pc : e.backMarkers}
 
-setTopMargin :: Numerical -> Environment -> Environment
+setTopMargin :: Value -> Environment -> Environment
 setTopMargin x e = e{topMargin = fromNumerical x e.height}
 
-setLeftMargin :: Numerical -> Environment -> Environment
+setLeftMargin :: Value -> Environment -> Environment
 setLeftMargin x e = e{leftMargin = fromNumerical x e.width}
 
-fromNumerical :: Numerical -> Int -> Int
+fromNumerical :: Value -> Int -> Int
 fromNumerical (Number x) _ = x
 fromNumerical (Rational n d) x = x * n `div` d
-fromNumerical (Percent p) x = x * 100 `div` p
+fromNumerical (Percentage p) x = x * 100 `div` p
+fromNumerical _ _ = error "non-numerical argument"
 
 out :: (MonadIO m) => Text -> m ()
 out t = liftIO $ TIO.putStr t >> hFlush stdout

@@ -7,9 +7,10 @@ import Data.Text qualified as T
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Parser.AST qualified as AST
-import Runtime.Duration qualified as Duration
 import Runtime.Instructions (Instruction)
 import Runtime.Instructions qualified as Runtime
+import Runtime.Value (Value)
+import Runtime.Value qualified as Runtime
 import VT qualified
 
 type Compiler = Either Text (Vector Instruction)
@@ -46,11 +47,11 @@ compileType args [AST.Literal t] = do
   where
     getPause :: Compiler
     getPause = case M.lookup "delay" ma of
-        Nothing -> pure $ V.singleton $ Runtime.Pause $ Duration.Milliseconds 50
-        (Just (AST.ArgDuration x)) -> pure $ V.singleton $ Runtime.Pause x
+        Nothing -> pure $ V.singleton $ Runtime.Pause $ Runtime.Milliseconds 50
+        (Just (Runtime.Duration x)) -> pure $ V.singleton $ Runtime.Pause x
         _ -> Left "'type' only accepts a duration argument"
 
-    ma :: Map Text AST.ArgValue
+    ma :: Map Text Value
     ma = M.fromList $ map (\(AST.Arg name v) -> (name, v)) args
 compileType _ _ = Left "type only accepts a single literal"
 
@@ -86,15 +87,15 @@ compileMargin args [] = do
         then Left "no margins provided"
         else pure combined
   where
-    margin :: Text -> (Runtime.Numerical -> Instruction) -> Compiler
+    margin :: Text -> (Value -> Instruction) -> Compiler
     margin k f = case M.lookup k ma of
         Nothing -> pure V.empty
-        Just (AST.ArgNumber x) -> pure $ V.singleton $ f $ Runtime.Number x
-        Just (AST.ArgPercentage x) -> pure $ V.singleton $ f $ Runtime.Percent x
-        Just (AST.ArgRational n d) -> pure $ V.singleton $ f $ Runtime.Rational n d
+        Just (Runtime.Number x) -> pure $ V.singleton $ f $ Runtime.Number x
+        Just (Runtime.Percentage x) -> pure $ V.singleton $ f $ Runtime.Percentage x
+        Just (Runtime.Rational n d) -> pure $ V.singleton $ f $ Runtime.Rational n d
         Just v -> Left $ "unsupported left margin type: " <> T.show v
 
-    ma :: Map Text AST.ArgValue
+    ma :: Map Text Value
     ma = M.fromList $ map (\(AST.Arg name v) -> (name, v)) args
 compileMargin _ body = Left $ "'margin' does not take a body but got: " <> T.show body
 

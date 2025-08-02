@@ -3,12 +3,11 @@ module Parser.AST (
     Presentation (..),
     Number (..),
     Arg (..),
-    ArgValue (..),
 ) where
 
 import Data.Text
 import PrettyPrint (Empty, PrettyPrint)
-import Runtime.Duration (Duration)
+import Runtime.Value
 
 newtype Presentation = Presentation {presentation :: [Expr]}
     deriving newtype (Show, Eq, Semigroup, Empty, PrettyPrint)
@@ -25,14 +24,5 @@ data Number
     | Percentage Int
     deriving stock (Show, Eq)
 
-data Arg = Arg Text ArgValue
-    deriving stock (Show, Eq)
-
-data ArgValue
-    = ArgNumber Int
-    | ArgRational Int Int
-    | ArgPercentage Int
-    | ArgDuration Duration
-    | ArgRGB Int Int Int
-    | ArgLiteral Text
+data Arg = Arg Text Value
     deriving stock (Show, Eq)

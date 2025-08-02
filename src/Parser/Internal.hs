@@ -5,8 +5,9 @@ import Data.Char qualified as C
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
-import Parser.AST (Arg (..), ArgValue (..), Expr (..), Presentation (..))
-import Runtime.Duration (Duration (..))
+import Parser.AST (Arg (..), Expr (..), Presentation (..))
+import Runtime.Value (Duration (..))
+import Runtime.Value qualified as Value
 import Text.Megaparsec (MonadParsec (notFollowedBy, takeWhile1P), Parsec, between, choice, eof, many, satisfy, sepBy, sepBy1, some, try, (<|>))
 import Text.Megaparsec.Char (alphaNumChar, char, eol, hexDigitChar, hspace, space, string)
 import Text.Megaparsec.Char.Lexer qualified as L
@@ -58,12 +59,12 @@ args = matchArgs <|> pure []
         _ <- char '=' <* hspace
         v <-
             choice
-                [ try $ uncurry ArgRational <$> try rational
-                , try $ ArgPercentage <$> percentage
-                , try $ ArgDuration <$> duration
-                , uncurry3 ArgRGB <$> rgb
-                , ArgNumber <$> L.decimal
-                , ArgLiteral <$> identifier
+                [ try $ uncurry Value.Rational <$> try rational
+                , try $ Value.Percentage <$> percentage
+                , try $ Value.Duration <$> duration
+                , uncurry3 Value.RGB <$> rgb
+                , Value.Number <$> L.decimal
+                , Value.Literal <$> identifier
                 ]
         _ <- hspace
         pure $ Arg name v

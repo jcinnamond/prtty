@@ -1,18 +1,17 @@
 module Runtime.Instructions (
     Instruction (..),
-    Numerical (..),
-    RGB (..),
+    Style (..),
 ) where
 
 import Data.Text (Text)
-import Runtime.Duration (Duration)
+import Runtime.Value (Duration, Value)
 
 data Instruction
     = Output Text
     | Newline
     | StoreBackMarker
-    | SetTopMargin Numerical
-    | SetLeftMargin Numerical
+    | SetTopMargin Value
+    | SetLeftMargin Value
     | Home
     | WaitForInput
     | VCenter Int
@@ -20,11 +19,8 @@ data Instruction
     | Pause Duration
     deriving stock (Show, Eq)
 
-data Numerical
-    = Percent Int
-    | Number Int
-    | Rational Int Int
-    deriving stock (Show, Eq)
-
-data RGB = RGB Int Int Int
+data Style
+    = FgColor Value
+    | BgColor Value
+    | Bold
     deriving stock (Show, Eq)
