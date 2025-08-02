@@ -25,6 +25,8 @@ module VT (
     noAltBuffer,
     hideCursor,
     showCursor,
+    moveToCol,
+    moveRight,
 )
 where
 
@@ -40,6 +42,12 @@ clear = esc' <> "2J"
 
 moveTo :: Int -> Int -> Text
 moveTo y x = esc' <> fromInt y <> ";" <> fromInt x <> "f"
+
+moveToCol :: Int -> Text
+moveToCol y = esc' <> fromInt y <> "G"
+
+moveRight :: Int -> Text
+moveRight x = esc' <> fromInt x <> "C"
 
 altBuffer, noAltBuffer :: Text
 altBuffer = esc' <> "?1049h"

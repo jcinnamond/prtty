@@ -1,7 +1,9 @@
 module Runtime.Run (run) where
 
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad (when)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.State (StateT, execStateT, gets, modify)
+import Data.Text (Text)
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
 import Data.Vector qualified as V
@@ -24,10 +26,6 @@ data Environment = Environment
     -- ^ the height of the terminal, in characters
     , width :: Int
     -- ^ the width of the terminal, in characters
-    , y :: Int
-    -- ^ current cursor column, used for moving row
-    , x :: Int
-    -- ^ current cursor row, used for moving column (e.g., newline)
     , topMargin :: Int
     , leftMargin :: Int
     , style :: Style
@@ -56,8 +54,6 @@ newEnvironment is = do
             , width = twidth
             , topMargin = 0
             , leftMargin = 0
-            , y = 0
-            , x = 0
             , style =
                 Style
                     { fgColor = RGB 255 255 255
@@ -76,19 +72,17 @@ initializeTerminal :: IO ()
 initializeTerminal = do
     hSetBuffering stdin NoBuffering
     hSetEcho stdin False
-    TIO.putStr $
+    out $
         VT.altBuffer
             <> VT.clear
             <> VT.moveTo 0 0
             <> VT.hideCursor
-    hFlush stdout
 
 restoreTerminal :: IO ()
 restoreTerminal = do
-    TIO.putStr $
+    out $
         VT.showCursor
             <> VT.noAltBuffer
-    hFlush stdout
 
 run' :: Environment -> IO ()
 run' e = do
@@ -99,21 +93,48 @@ run' e = do
             run' e'
 
 runInstruction :: Instruction -> Runtime
-runInstruction (Output t) = liftIO $ TIO.putStr t >> hFlush stdout
+runInstruction (Output t) = out t
+runInstruction Newline = runNewline
 runInstruction StoreBackMarker = modify storeBackMarker
 runInstruction (SetTopMargin x) = modify $ setTopMargin x
 runInstruction (SetLeftMargin x) = modify $ setLeftMargin x
+runInstruction (Center x) = runCenter x
+runInstruction (VCenter x) = runVCenter x
 runInstruction Home = do
     y <- gets topMargin
     x <- gets leftMargin
-    liftIO $ TIO.putStr $ VT.moveTo y x
-    modify home
+    out $ VT.moveTo y x
+    nochange
 runInstruction WaitForInput = do
     c <- liftIO getChar
     case c of
         'b' -> runMoveBack
         'q' -> modify stop
-        _ -> modify id
+        _ -> nochange
+
+runCenter :: Int -> Runtime
+runCenter x = do
+    width <- gets width
+    let col = width `div` 2 - x `div` 2
+    out $ VT.moveToCol col
+
+runNewline :: Runtime
+runNewline = do
+    margin <- gets leftMargin
+    out "\n"
+    when (margin > 1) $ out $ VT.moveRight $ margin - 1
+    nochange
+
+runVCenter :: Int -> Runtime
+runVCenter x = do
+    height <- gets height
+    left <- gets leftMargin
+    let row = height `div` 2 - x `div` 2
+    out $ VT.moveTo row left
+    nochange
+
+nochange :: Runtime
+nochange = pure ()
 
 stop :: Environment -> Environment
 stop e = e{pc = V.length e.instructions}
@@ -136,9 +157,6 @@ moveBack lj bm e =
                 then moveBack Nothing xs e{backMarkers = xs, lastJump = Nothing}
                 else e{pc = x, lastJump = Just x}
 
-home :: Environment -> Environment
-home e = e{x = e.leftMargin, y = e.topMargin}
-
 storeBackMarker :: Environment -> Environment
 storeBackMarker e = e{backMarkers = e.pc : e.backMarkers}
 
@@ -152,3 +170,6 @@ fromNumerical :: Numerical -> Int -> Int
 fromNumerical (Number x) _ = x
 fromNumerical (Rational n d) x = x * n `div` d
 fromNumerical (Percent p) x = x * 100 `div` p
+
+out :: (MonadIO m) => Text -> m ()
+out t = liftIO $ TIO.putStr t >> hFlush stdout

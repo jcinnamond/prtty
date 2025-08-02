@@ -163,8 +163,8 @@ parsePresentation = do
         it "parses expressions separated by <" $ do
             parse ".nl < .nl < some text"
                 `shouldParse` AST.Presentation
-                    [ AST.Call "nl" [] []
-                    , AST.Call "nl" [] []
+                    [ AST.Newline
+                    , AST.Newline
                     , AST.Literal "some text"
                     ]
 
@@ -186,9 +186,9 @@ parsePresentation = do
                         [AST.Arg "name" (AST.ArgLiteral "blue")]
                         [ AST.Literal "heading"
                         ]
-                    , AST.Call "nl" [] []
+                    , AST.Newline
                     , AST.Literal "some text"
-                    , AST.Call "nl" [] []
+                    , AST.Newline
                     ]
 
         it "parses a sample presentation" $ do
@@ -219,8 +219,8 @@ parsePresentation = do
                                 , AST.Call "type" [] [AST.Literal "A presentation"]
                                 ]
                             , AST.Call "pause" [AST.Arg "delay" (AST.ArgDuration (Seconds 1))] []
-                            , AST.Call "nl" [] []
-                            , AST.Call "nl" [] []
+                            , AST.Newline
+                            , AST.Newline
                             , AST.Call
                                 "center"
                                 []

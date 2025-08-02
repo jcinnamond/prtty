@@ -15,6 +15,7 @@ newtype Presentation = Presentation {presentation :: [Expr]}
 
 data Expr
     = Literal Text
+    | Newline
     | Call Text [Arg] [Expr]
     deriving stock (Show, Eq)
 

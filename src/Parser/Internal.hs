@@ -22,9 +22,13 @@ expressionChain = expression `sepBy1` (hspace <* char '<' <* hspace) <* many eol
 expression :: Parser Expr
 expression =
     choice
-        [ call
+        [ newline
+        , call
         , Literal <$> literal
         ]
+
+newline :: Parser Expr
+newline = string ".nl" >> pure Newline
 
 call :: Parser Expr
 call = L.indentBlock space p

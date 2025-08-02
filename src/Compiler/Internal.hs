@@ -13,8 +13,12 @@ import VT qualified
 
 type Compiler = Either Text (Vector Instruction)
 
+compileExpressions :: [AST.Expr] -> Compiler
+compileExpressions exprs = V.concat <$> mapM compileExpression exprs
+
 compileExpression :: AST.Expr -> Compiler
 compileExpression (AST.Literal t) = pure $ V.singleton $ Runtime.Output t
+compileExpression AST.Newline = pure $ V.singleton Runtime.Newline
 compileExpression (AST.Call name args body) = compileBuiltin name args body
 
 compileBuiltin :: Text -> [AST.Arg] -> [AST.Expr] -> Compiler
@@ -23,7 +27,26 @@ compileBuiltin "home" = standalone "home" $ V.singleton Runtime.Home
 compileBuiltin "margin" = compileMargin
 compileBuiltin "nl" = standalone "nl" $ V.singleton $ Runtime.Output "\n"
 compileBuiltin "wait" = standalone "wait" compileWait
+compileBuiltin "center" = withNoArgs "center" compileCenter
+compileBuiltin "vcenter" = withNoArgs "vcenter" compileVCenter
 compileBuiltin x = unrecognised x
+
+compileCenter :: [AST.Expr] -> Compiler
+compileCenter exprs = compileWithBody (Runtime.Center (width exprs)) exprs
+  where
+    width [] = 0
+    width (AST.Newline : xs) = width xs
+    width (AST.Literal l : xs) = T.length l + width xs
+    width (AST.Call _ _ body : xs) = length body + length xs
+
+compileVCenter :: [AST.Expr] -> Compiler
+compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs
+  where
+    height :: [AST.Expr] -> Int
+    height [] = 0
+    height (AST.Newline : xs) = 1 + height xs
+    height (AST.Literal _ : xs) = height xs
+    height (AST.Call _ _ body : xs) = height body + height xs
 
 compileClear :: Vector Instruction
 compileClear = V.fromList [Runtime.StoreBackMarker, Runtime.Output VT.clear, Runtime.Home]
@@ -62,6 +85,10 @@ withNoArgs name _ args = const $ Left $ "unexpected args when calling '" <> name
 withNoBody :: Text -> Vector Instruction -> [AST.Expr] -> Compiler
 withNoBody _ f [] = pure f
 withNoBody name _ body = Left $ "unexpected args when calling '" <> name <> "': " <> T.show body
+
+compileWithBody :: Instruction -> [AST.Expr] -> Compiler
+compileWithBody i [] = pure $ V.singleton i
+compileWithBody i body = V.cons i <$> compileExpressions body
 
 unrecognised :: Text -> [AST.Arg] -> [AST.Expr] -> Compiler
 unrecognised name args body = Left $ "unrecognised '" <> name <> "': " <> T.show args <> " {" <> T.show body <> "}"

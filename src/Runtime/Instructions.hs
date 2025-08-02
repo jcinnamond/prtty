@@ -8,11 +8,14 @@ import Data.Text (Text)
 
 data Instruction
     = Output Text
+    | Newline
     | StoreBackMarker
     | SetTopMargin Numerical
     | SetLeftMargin Numerical
     | Home
     | WaitForInput
+    | VCenter Int
+    | Center Int
     deriving stock (Show, Eq)
 
 data Numerical

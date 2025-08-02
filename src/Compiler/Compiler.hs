@@ -2,9 +2,8 @@ module Compiler.Compiler (
     compile,
 ) where
 
-import Compiler.Internal (Compiler, compileExpression)
-import Data.Vector qualified as V
+import Compiler.Internal (Compiler, compileExpressions)
 import Parser.AST (Presentation (..))
 
 compile :: Presentation -> Compiler
-compile (Presentation{presentation}) = V.concat <$> mapM compileExpression presentation
+compile (Presentation{presentation}) = compileExpressions presentation
