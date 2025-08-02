@@ -31,6 +31,7 @@ compileBuiltin "wait" = standalone "wait" compileWait
 compileBuiltin "center" = withNoArgs "center" compileCenter
 compileBuiltin "vcenter" = withNoArgs "vcenter" compileVCenter
 compileBuiltin "type" = compileType
+compileBuiltin "style" = compileStyle
 compileBuiltin x = unrecognised x
 
 compileType :: AST.Args -> [AST.Expr] -> Compiler
@@ -91,6 +92,21 @@ compileMargin args [] = do
         Just (Runtime.Rational n d) -> pure $ V.singleton $ f $ Runtime.Rational n d
         Just v -> Left $ "unsupported left margin type: " <> T.show v
 compileMargin _ body = Left $ "'margin' does not take a body but got: " <> T.show body
+
+compileStyle :: AST.Args -> [AST.Expr] -> Compiler
+compileStyle args body = do
+    let style =
+            Runtime.emptyStyle
+                { Runtime.bold = M.lookup "bold" args
+                , Runtime.fgColor = M.lookup "fg" args
+                , Runtime.bgColor = M.lookup "bg" args
+                }
+    if
+        | Runtime.nullStyle style -> pure V.empty
+        | null body -> pure $ V.singleton $ Runtime.SetStyle style
+        | otherwise -> do
+            rest <- compileExpressions body
+            pure $ V.fromList [Runtime.SaveStyle, Runtime.SetStyle style] <> rest <> V.singleton Runtime.RestoreStyle
 
 standalone :: Text -> Vector Instruction -> AST.Args -> [AST.Expr] -> Compiler
 standalone name = withNoArgs name . withNoBody name

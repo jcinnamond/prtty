@@ -1,3 +1,4 @@
+.style [ bg=#0295b6; fg=#f5f500]
 .clear
 .vcenter << .center << .type << this is a title slide
 .wait
@@ -6,7 +7,11 @@
 .vcenter 
     hello
     .nl
-    this is some content
+    this is 
+    .style [fg=#ff0000; bold] 
+        some 
+        .type [delay=200ms] << very important 
+    content
     .nl
     vcentered
 .wait
@@ -16,7 +21,9 @@
 .vcenter
     centered with margins
     .nl
-    over multiple lines
+    .style [bold] << over multiple lines
+    .nl
+    no more bold
 .wait
 
 .clear

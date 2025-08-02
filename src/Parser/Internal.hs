@@ -56,7 +56,14 @@ args = matchArgs <|> pure M.empty
                 (matchArg `sepBy` char ';')
 
     matchArg :: Parser (Text, Value)
-    matchArg = do
+    matchArg =
+        choice
+            [ try matchArgWithValue
+            , matchToggle
+            ]
+
+    matchArgWithValue :: Parser (Text, Value)
+    matchArgWithValue = do
         name <- hspace *> identifier <* hspace
         _ <- char '=' <* hspace
         v <-
@@ -70,6 +77,11 @@ args = matchArgs <|> pure M.empty
                 ]
         _ <- hspace
         pure (name, v)
+
+    matchToggle :: Parser (Text, Value)
+    matchToggle = do
+        name <- hspace *> identifier <* hspace
+        pure (name, Value.Toggle)
 
     uncurry3 :: forall a b c d. (a -> b -> c -> d) -> (a, b, c) -> d
     uncurry3 f (x, y, z) = f x y z

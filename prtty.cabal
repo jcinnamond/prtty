@@ -22,6 +22,7 @@ common shared
     DeriveAnyClass
     DerivingStrategies
     DuplicateRecordFields
+    MultiWayIf
     MultilineStrings
     OverloadedRecordDot
     OverloadedStrings
@@ -43,7 +44,6 @@ library
     Parser.Internal
     Parser.Parser
     PrettyPrint
-    Reduce
     Runtime
     Runtime.Instructions
     Runtime.Run
@@ -78,7 +78,6 @@ test-suite prtty-test
     CompilerSpec
     PDLSpec
     ParserSpec
-    VTSpec
 
   build-depends:
     hspec ^>=2.11.12,

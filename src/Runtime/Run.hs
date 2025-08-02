@@ -8,7 +8,7 @@ import Data.Text (Text)
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
 import Data.Vector qualified as V
-import Runtime.Instructions (Instruction (..))
+import Runtime.Instructions (Instruction (..), Style (..))
 import Runtime.Value (Value (..), nanoseconds)
 import System.Console.Terminal.Size qualified as TSize
 import System.IO (BufferMode (..), hFlush, hSetBuffering, hSetEcho, stdin, stdout)
@@ -30,6 +30,8 @@ data Environment = Environment
     -- ^ the width of the terminal, in characters
     , topMargin :: Int
     , leftMargin :: Int
+    , currentStyle :: Style
+    , styleHistory :: [Style]
     }
     deriving stock (Show, Eq)
 
@@ -49,6 +51,13 @@ newEnvironment is = do
             , width = twidth
             , topMargin = 0
             , leftMargin = 0
+            , currentStyle =
+                Style
+                    { fgColor = Just $ RGB 0 0 0
+                    , bgColor = Just $ RGB 255 255 255
+                    , bold = Nothing
+                    }
+            , styleHistory = []
             }
 
 run :: Vector Instruction -> IO ()
@@ -93,6 +102,41 @@ runInstruction (VCenter x) = runVCenter x
 runInstruction Home = runHome
 runInstruction WaitForInput = runWaitForInput
 runInstruction (Pause d) = liftIO $ threadDelay $ nanoseconds d
+runInstruction (SetStyle style) = runSetStyle style
+runInstruction SaveStyle = modify storeCurrentStyle
+runInstruction RestoreStyle = runRestoreStyles
+
+storeCurrentStyle :: Environment -> Environment
+storeCurrentStyle e = e{styleHistory = e.currentStyle : e.styleHistory}
+
+runRestoreStyles :: Runtime
+runRestoreStyles = do
+    h <- gets styleHistory
+    case h of
+        [] -> nochange
+        (x : xs) -> do
+            outputStyle x
+            modify (\e -> e{currentStyle = x, styleHistory = xs})
+
+outputStyle :: Style -> Runtime
+outputStyle s = out $ styleFgColor s.fgColor <> styleBgColor s.bgColor <> styleBold s.bold
+  where
+    styleFgColor Nothing = ""
+    styleFgColor (Just (RGB r g b)) = VT.fgColor r g b
+    styleFgColor _ = error "unimplemented"
+
+    styleBgColor Nothing = ""
+    styleBgColor (Just (RGB r g b)) = VT.bgColor r g b
+    styleBgColor _ = error "unimplemented"
+
+    styleBold Nothing = VT.resetBold
+    styleBold (Just Toggle) = VT.bold
+    styleBold _ = error "unimplemented"
+
+runSetStyle :: Style -> Runtime
+runSetStyle s = do
+    outputStyle s
+    modify (\e -> e{currentStyle = e.currentStyle <> s})
 
 runWaitForInput :: Runtime
 runWaitForInput = do

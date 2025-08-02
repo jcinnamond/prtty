@@ -132,5 +132,32 @@ compileBuiltinSpec = do
                                   , Runtime.Pause (Runtime.Seconds 1)
                                   ]
 
+    describe "'style'" $ do
+        describe "without a block" $ do
+            it "sets bold" $
+                AST.Call "style" (M.fromList [("bold", Runtime.Toggle)]) []
+                    `shouldCompileTo` [Runtime.SetStyle (nostyle{Runtime.bold = Just Runtime.Toggle})]
+            it "sets fg color" $
+                AST.Call "style" (M.fromList [("fg", Runtime.RGB 77 77 77)]) []
+                    `shouldCompileTo` [Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 77 77 77})]
+            it "sets bg color" $
+                AST.Call "style" (M.fromList [("bg", Runtime.RGB 77 77 77)]) []
+                    `shouldCompileTo` [Runtime.SetStyle (nostyle{Runtime.bgColor = Just $ Runtime.RGB 77 77 77})]
+        describe "with a block" $ do
+            it "temporarily sets the styles" $ do
+                AST.Call
+                    "style"
+                    (M.fromList [("bold", Runtime.Toggle)])
+                    [ AST.Literal "some text"
+                    ]
+                    `shouldCompileTo` [ Runtime.SaveStyle
+                                      , Runtime.SetStyle (nostyle{Runtime.bold = Just Runtime.Toggle})
+                                      , Runtime.Output "some text"
+                                      , Runtime.RestoreStyle
+                                      ]
+
+nostyle :: Runtime.Style
+nostyle = Runtime.emptyStyle
+
 shouldCompileTo :: AST.Expr -> [Runtime.Instruction] -> Expectation
 shouldCompileTo expr is = compileExpression expr `shouldBe` Right (V.fromList is)

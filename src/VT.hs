@@ -6,7 +6,6 @@ module VT (
     toText,
     -- Styles
     reset,
-    bold,
     -- Colors
     black,
     red,
@@ -16,9 +15,8 @@ module VT (
     magenta,
     cyan,
     white,
-    fgColor,
-    bgColor,
     -- Let's try something new
+    -- Control
     clear,
     moveTo,
     altBuffer,
@@ -27,6 +25,12 @@ module VT (
     showCursor,
     moveToCol,
     moveRight,
+    -- Styles
+    bold,
+    fgColor,
+    bgColor,
+    esc',
+    resetBold,
 )
 where
 
@@ -56,6 +60,14 @@ noAltBuffer = esc' <> "?1049l"
 hideCursor, showCursor :: Text
 hideCursor = esc' <> "?25l"
 showCursor = esc' <> "?25h"
+
+bold, resetBold :: Text
+bold = esc' <> "1m"
+resetBold = esc' <> "22m"
+
+fgColor, bgColor :: Int -> Int -> Int -> Text
+fgColor r g b = esc' <> "38;2;" <> fromInt r <> ";" <> fromInt g <> ";" <> fromInt b <> "m"
+bgColor r g b = esc' <> "48;2;" <> fromInt r <> ";" <> fromInt g <> ";" <> fromInt b <> "m"
 
 data Displayable
     = Literal Text
@@ -106,9 +118,6 @@ toText NoAltBuffer = esc "?1049" "l"
 reset :: Displayable
 reset = Style "0"
 
-bold :: Displayable
-bold = Style "1"
-
 black, red, green, yellow, blue, magenta, cyan, white :: Displayable
 black = Style "30"
 red = Style "31"
@@ -118,12 +127,6 @@ blue = Style "34"
 magenta = Style "35"
 cyan = Style "36"
 white = Style "37"
-
-fgColor :: (Int, Int, Int) -> Displayable
-fgColor rgb = Style "38" <> Style "2" <> hexToStyle rgb
-
-bgColor :: (Int, Int, Int) -> Displayable
-bgColor rgb = Style "48" <> Style "2" <> hexToStyle rgb
 
 hexToStyle :: (Int, Int, Int) -> Displayable
 hexToStyle (r, g, b) = toStyle r <> toStyle g <> toStyle b

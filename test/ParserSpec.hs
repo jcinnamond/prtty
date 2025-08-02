@@ -75,6 +75,8 @@ parseArgs = do
         it "parses literals" $ do
             parse "[align=center]" `shouldParse` M.fromList [("align", Runtime.Literal "center")]
             parse "[align= center ]" `shouldParse` M.fromList [("align", Runtime.Literal "center")]
+        it "parses toggles (keys without vaules)" $ do
+            parse "[bold]" `shouldParse` M.fromList [("bold", Runtime.Toggle)]
 
         it "parses multiple args" $ do
             parse "[x=1/3;y=2]"
@@ -82,9 +84,10 @@ parseArgs = do
                     [ ("x", Runtime.Rational 1 3)
                     , ("y", Runtime.Number 2)
                     ]
-            parse "[ align = left ; offset = 10% ; delay = 10s ]"
+            parse "[ align = left ; bold ; offset = 10% ; delay = 10s ]"
                 `shouldParse` M.fromList
                     [ ("align", Runtime.Literal "left")
+                    , ("bold", Runtime.Toggle)
                     , ("offset", Runtime.Percentage 10)
                     , ("delay", Runtime.Duration (Runtime.Seconds 10))
                     ]
