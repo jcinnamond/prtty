@@ -190,6 +190,12 @@ compileBuiltinSpec = do
                                       , Runtime.RestoreStyle
                                       ]
 
+    describe "'img'" $ do
+        it "generates an instruction to show the image" $
+            do
+                AST.Call "image" (M.fromList [("path", Runtime.Filepath "path.png")]) []
+                `shouldCompileTo` [Runtime.Image "path.png"]
+
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle
 

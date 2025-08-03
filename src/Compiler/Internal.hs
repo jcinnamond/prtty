@@ -34,7 +34,17 @@ compileBuiltin "vspace" = compileVSpace
 compileBuiltin "type" = compileType
 compileBuiltin "style" = compileStyle
 compileBuiltin "slide" = withNoArgs "slide" compileSlide
+compileBuiltin "image" = compileImage
 compileBuiltin x = unrecognised x
+
+compileImage :: AST.Args -> [AST.Expr] -> Compiler
+compileImage args body = case M.lookup "path" args of
+    Nothing -> Left "missing image path"
+    (Just (Runtime.Filepath path)) -> withNoBody "image" (image path) body
+    _ -> Left "malformed image instruction"
+  where
+    image :: Text -> Vector Instruction
+    image path = V.singleton $ Runtime.Image path
 
 compileVSpace :: AST.Args -> [AST.Expr] -> Compiler
 compileVSpace args = withNoBody "vspace" vspace

@@ -75,6 +75,11 @@ parseArgs = do
         it "parses literals" $ do
             parse "[align=center]" `shouldParse` M.fromList [("align", Runtime.Literal "center")]
             parse "[align= center ]" `shouldParse` M.fromList [("align", Runtime.Literal "center")]
+        it "parses filepaths" $ do
+            parse "[path=./some/path.png]" `shouldParse` M.fromList [("path", Runtime.Filepath "./some/path.png")]
+            parse "[path=/absolute/path.png]" `shouldParse` M.fromList [("path", Runtime.Filepath "/absolute/path.png")]
+            parse "[path=~/home/path.png]" `shouldParse` M.fromList [("path", Runtime.Filepath "~/home/path.png")]
+            parse "[path = ~/home/path.png]" `shouldParse` M.fromList [("path", Runtime.Filepath "~/home/path.png")]
         it "parses toggles (keys without vaules)" $ do
             parse "[bold]" `shouldParse` M.fromList [("bold", Runtime.Toggle)]
 

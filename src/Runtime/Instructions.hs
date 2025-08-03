@@ -25,6 +25,7 @@ data Instruction
     | SetStyle Style
     | SaveStyle
     | RestoreStyle
+    | Image Text
     deriving stock (Show, Eq)
 
 data Style

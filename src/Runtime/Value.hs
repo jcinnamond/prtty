@@ -13,6 +13,7 @@ data Value
     | Duration Duration
     | RGB Int Int Int
     | Literal Text
+    | Filepath Text
     | Toggle
     deriving stock (Show, Eq)
 

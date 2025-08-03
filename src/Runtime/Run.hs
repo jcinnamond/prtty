@@ -1,10 +1,12 @@
 module Runtime.Run (run) where
 
+import Cmd qualified
 import Control.Concurrent (threadDelay)
 import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.State (StateT, execStateT, gets, modify)
 import Data.Text (Text)
+import Data.Text.Encoding qualified as TE
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
 import Data.Vector qualified as V
@@ -106,6 +108,10 @@ runInstruction (Pause d) = liftIO $ threadDelay $ nanoseconds d
 runInstruction (SetStyle style) = runSetStyle style
 runInstruction SaveStyle = modify storeCurrentStyle
 runInstruction RestoreStyle = runRestoreStyles
+runInstruction (Image path) = runImage path
+
+runImage :: Text -> Runtime
+runImage path = liftIO $ Cmd.run $ "kitten icat --align center --scale-up " <> TE.encodeUtf8 path
 
 moveToLeftMargin :: Runtime
 moveToLeftMargin = do

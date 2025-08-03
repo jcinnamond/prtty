@@ -73,6 +73,7 @@ args = matchArgs <|> pure M.empty
                 , try $ Value.Duration <$> duration
                 , uncurry3 Value.RGB <$> rgb
                 , Value.Number <$> L.decimal
+                , try $ Value.Filepath <$> filepath
                 , Value.Literal <$> identifier
                 ]
         _ <- hspace
@@ -119,6 +120,12 @@ rgb = do
   where
     fromPair :: Char -> Char -> Int
     fromPair x y = C.digitToInt x * 16 + C.digitToInt y
+
+filepath :: Parser Text
+filepath = do
+    rel <- string "./" <|> string "/" <|> string "~/"
+    rest <- T.pack <$> many (alphaNumChar <|> char '/' <|> char '.')
+    pure $ rel <> rest
 
 literal :: Parser Text
 literal = nonSpace <> literalP
