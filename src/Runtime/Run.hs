@@ -93,18 +93,24 @@ run' e = do
 
 runInstruction :: Instruction -> Runtime
 runInstruction (Output t) = out t
-runInstruction Newline = runNewline
+runInstruction Newline = out "\n" >> moveToLeftMargin
 runInstruction StoreBackMarker = modify storeBackMarker
 runInstruction (SetTopMargin x) = modify $ setTopMargin x
 runInstruction (SetLeftMargin x) = modify $ setLeftMargin x
 runInstruction (Center x) = runCenter x
 runInstruction (VCenter x) = runVCenter x
+runInstruction (VSpace x) = out (VT.moveDown x) >> moveToLeftMargin
 runInstruction Home = runHome
 runInstruction WaitForInput = runWaitForInput
 runInstruction (Pause d) = liftIO $ threadDelay $ nanoseconds d
 runInstruction (SetStyle style) = runSetStyle style
 runInstruction SaveStyle = modify storeCurrentStyle
 runInstruction RestoreStyle = runRestoreStyles
+
+moveToLeftMargin :: Runtime
+moveToLeftMargin = do
+    margin <- gets leftMargin
+    when (margin > 1) $ out $ VT.moveRight $ margin - 1
 
 storeCurrentStyle :: Environment -> Environment
 storeCurrentStyle e = e{styleHistory = e.currentStyle : e.styleHistory}
@@ -157,12 +163,6 @@ runCenter x = do
     width <- gets width
     let col = width `div` 2 - x `div` 2
     out $ VT.moveToCol col
-
-runNewline :: Runtime
-runNewline = do
-    margin <- gets leftMargin
-    out "\n"
-    when (margin > 1) $ out $ VT.moveRight $ margin - 1
 
 runVCenter :: Int -> Runtime
 runVCenter x = do

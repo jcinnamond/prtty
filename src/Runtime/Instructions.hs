@@ -20,6 +20,7 @@ data Instruction
     | WaitForInput
     | VCenter Int
     | Center Int
+    | VSpace Int
     | Pause Duration
     | SetStyle Style
     | SaveStyle

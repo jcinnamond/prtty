@@ -30,10 +30,18 @@ compileBuiltin "nl" = standalone "nl" $ V.singleton $ Runtime.Output "\n"
 compileBuiltin "wait" = standalone "wait" compileWait
 compileBuiltin "center" = withNoArgs "center" compileCenter
 compileBuiltin "vcenter" = withNoArgs "vcenter" compileVCenter
+compileBuiltin "vspace" = compileVSpace
 compileBuiltin "type" = compileType
 compileBuiltin "style" = compileStyle
 compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin x = unrecognised x
+
+compileVSpace :: AST.Args -> [AST.Expr] -> Compiler
+compileVSpace args = withNoBody "vspace" vspace
+  where
+    vspace = V.singleton $ Runtime.VSpace (lineCount $ M.lookup "lines" args)
+    lineCount (Just (Runtime.Number x)) = x
+    lineCount _ = 1
 
 compileSlide :: [AST.Expr] -> Compiler
 compileSlide body = do
@@ -73,6 +81,10 @@ compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs
     height [] = 0
     height (AST.Newline : xs) = 1 + height xs
     height (AST.Literal _ : xs) = height xs
+    height (AST.Call "vspace" args _ : xs) = vspace (M.lookup "lines" args) + height xs
+      where
+        vspace (Just (Runtime.Number x)) = x
+        vspace _ = 1
     height (AST.Call _ _ body : xs) = height body + height xs
 
 compileClear :: Vector Instruction

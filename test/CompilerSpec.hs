@@ -121,6 +121,22 @@ compileBuiltinSpec = do
                               , Runtime.Output "there"
                               , Runtime.Newline
                               ]
+        AST.Call
+            "vcenter"
+            M.empty
+            [ AST.Call "vspace" (M.fromList [("lines", Runtime.Number 5)]) []
+            , AST.Literal "hello"
+            , AST.Newline
+            ]
+            `shouldCompileTo` [ Runtime.VCenter 6
+                              , Runtime.VSpace 5
+                              , Runtime.Output "hello"
+                              , Runtime.Newline
+                              ]
+
+    it "complies 'vspace'" $ do
+        AST.Call "vspace" M.empty [] `shouldCompileTo` [Runtime.VSpace 1]
+        AST.Call "vspace" (M.fromList [("lines", Runtime.Number 5)]) [] `shouldCompileTo` [Runtime.VSpace 5]
 
     describe "'type'" $ do
         it "compiles with a default pause time" $ do

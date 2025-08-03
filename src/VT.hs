@@ -11,6 +11,7 @@ module VT (
     showCursor,
     moveToCol,
     moveRight,
+    moveDown,
     -- Styles
     bold,
     fgColor,
@@ -34,8 +35,9 @@ moveTo y x = esc <> T.show y <> ";" <> T.show x <> "f"
 moveToCol :: Int -> Text
 moveToCol y = esc <> T.show y <> "G"
 
-moveRight :: Int -> Text
+moveRight, moveDown :: Int -> Text
 moveRight x = esc <> T.show x <> "C"
+moveDown x = esc <> T.show x <> "B"
 
 altBuffer, noAltBuffer :: Text
 altBuffer = esc <> "?1049h"
