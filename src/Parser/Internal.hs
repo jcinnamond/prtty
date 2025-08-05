@@ -9,8 +9,8 @@ import Data.Void (Void)
 import Parser.AST (Args, Expr (..), Presentation (..))
 import Runtime.Value (Duration (..), Value)
 import Runtime.Value qualified as Value
-import Text.Megaparsec (MonadParsec (notFollowedBy, takeWhile1P), Parsec, between, choice, eof, many, satisfy, sepBy, sepBy1, some, try, (<|>))
-import Text.Megaparsec.Char (alphaNumChar, char, eol, hexDigitChar, hspace, space, string)
+import Text.Megaparsec (MonadParsec (takeWhile1P), Parsec, between, choice, eof, many, manyTill, sepBy, sepBy1, some, try, (<|>))
+import Text.Megaparsec.Char (alphaNumChar, char, eol, hexDigitChar, hspace, printChar, space, string)
 import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
@@ -26,6 +26,7 @@ expression =
     choice
         [ newline
         , call
+        , Literal <$> quotedLiteral
         , Literal <$> literal
         ]
 
@@ -75,6 +76,7 @@ args = matchArgs <|> pure M.empty
                 , Value.Number <$> L.decimal
                 , try $ Value.Filepath <$> filepath
                 , Value.Literal <$> identifier
+                , Value.Literal <$> quotedLiteral
                 ]
         _ <- hspace
         pure (name, v)
@@ -128,20 +130,12 @@ filepath = do
     pure $ rel <> rest
 
 literal :: Parser Text
-literal = nonSpace <> literalP
+literal = nonSpace <> (T.pack <$> many printChar)
+
+quotedLiteral :: Parser Text
+quotedLiteral = T.pack <$> (char '"' >> manyTill L.charLiteral (char '"'))
 
 nonSpace :: Parser Text
 nonSpace = takeWhile1P (Just "non space") isNonSpace
   where
     isNonSpace x = isPrint x && not (isSpace x) && x /= '<'
-
-literalP :: Parser Text
-literalP =
-    T.pack
-        <$> many
-            ( choice
-                [ satisfy (\x -> isPrint x && (x /= '>') && (x /= '<'))
-                , try $ char '>' <* notFollowedBy (char '>')
-                , try $ char '<' <* notFollowedBy (char '<')
-                ]
-            )

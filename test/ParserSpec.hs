@@ -35,10 +35,17 @@ parseLiteralsSpec = do
             parse `shouldFailOn` "\n"
         it "stops parsing on newlines" $ do
             parse "hello there\n" `shouldParse` "hello there"
-        it "stops parsing on combinators" $ do
-            parse "hello there >> bob" `shouldParse` "hello there "
-            parse "hello there << bob" `shouldParse` "hello there "
-            parse `shouldFailOn` "<<"
+        it "consumes combinators when unquoted" $ do
+            parse "hello < there" `shouldParse` "hello < there"
+            parse "hello << there" `shouldParse` "hello << there"
+
+    describe "quoted literal" $ do
+        let parse = MP.parse Parser.quotedLiteral ""
+        it "parses text" $ do
+            parse [r|"hello"|] `shouldParse` "hello"
+        it "eats combinators" $ do
+            parse [r|"hello < there"|] `shouldParse` "hello < there"
+            parse [r|"hello << there"|] `shouldParse` "hello << there"
 
 parseIdentifier :: Spec
 parseIdentifier = do
@@ -75,6 +82,8 @@ parseArgs = do
         it "parses literals" $ do
             parse "[align=center]" `shouldParse` M.fromList [("align", Runtime.Literal "center")]
             parse "[align= center ]" `shouldParse` M.fromList [("align", Runtime.Literal "center")]
+        it "parses quoted literals" $ do
+            parse [r|[cmd="kitten icat img.png"]|] `shouldParse` M.fromList [("cmd", Runtime.Literal "kitten icat img.png")]
         it "parses filepaths" $ do
             parse "[path=./some/path.png]" `shouldParse` M.fromList [("path", Runtime.Filepath "./some/path.png")]
             parse "[path=/absolute/path.png]" `shouldParse` M.fromList [("path", Runtime.Filepath "/absolute/path.png")]
@@ -177,6 +186,13 @@ parsePresentation = do
                     [ AST.Newline
                     , AST.Newline
                     , AST.Literal "some text"
+                    ]
+
+        it "parses quoted literals separated by <" $ do
+            parse [r|"some text" < .nl|]
+                `shouldParse` AST.Presentation
+                    [ AST.Literal "some text"
+                    , AST.Newline
                     ]
 
         it "parses expressions over multiple lines" $ do
