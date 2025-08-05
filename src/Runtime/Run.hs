@@ -73,6 +73,10 @@ initializeTerminal :: IO ()
 initializeTerminal = do
     hSetBuffering stdin NoBuffering
     hSetEcho stdin False
+    reset
+
+reset :: IO ()
+reset =
     out $
         VT.altBuffer
             <> VT.clear
@@ -81,6 +85,7 @@ initializeTerminal = do
 
 restoreTerminal :: IO ()
 restoreTerminal = do
+    reset
     out $
         VT.showCursor
             <> VT.noAltBuffer
@@ -108,10 +113,13 @@ runInstruction (Pause d) = liftIO $ threadDelay $ nanoseconds d
 runInstruction (SetStyle style) = runSetStyle style
 runInstruction SaveStyle = modify storeCurrentStyle
 runInstruction RestoreStyle = runRestoreStyles
-runInstruction (Image path) = runImage path
+runInstruction (Exec cmd) = liftIO $ Cmd.run $ TE.encodeUtf8 cmd
+runInstruction Reset = runReset
 
-runImage :: Text -> Runtime
-runImage path = liftIO $ Cmd.run $ "kitten icat --align center --scale-up " <> TE.encodeUtf8 path
+runReset :: Runtime
+runReset = do
+    liftIO reset
+    outputStyle =<< gets currentStyle
 
 moveToLeftMargin :: Runtime
 moveToLeftMargin = do

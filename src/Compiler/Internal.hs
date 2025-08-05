@@ -34,8 +34,18 @@ compileBuiltin "vspace" = compileVSpace
 compileBuiltin "type" = compileType
 compileBuiltin "style" = compileStyle
 compileBuiltin "slide" = withNoArgs "slide" compileSlide
+compileBuiltin "exec" = compileExec
 compileBuiltin "image" = compileImage
 compileBuiltin x = unrecognised x
+
+compileExec :: AST.Args -> [AST.Expr] -> Compiler
+compileExec args body = case M.lookup "cmd" args of
+    Nothing -> Left "missing cmd"
+    (Just (Runtime.Literal cmd)) -> withNoBody "exec" (V.singleton (Runtime.Exec cmd) <> maybeReset) body
+    _ -> Left "malformed exec instruction"
+  where
+    maybeReset :: Vector Instruction
+    maybeReset = maybe V.empty (const $ V.singleton Runtime.Reset) (M.lookup "interactive" args)
 
 compileImage :: AST.Args -> [AST.Expr] -> Compiler
 compileImage args body = case M.lookup "path" args of
@@ -44,7 +54,7 @@ compileImage args body = case M.lookup "path" args of
     _ -> Left "malformed image instruction"
   where
     image :: Text -> Vector Instruction
-    image path = V.singleton $ Runtime.Image path
+    image path = V.singleton $ Runtime.Exec $ "kitten icat --align center " <> path
 
 compileVSpace :: AST.Args -> [AST.Expr] -> Compiler
 compileVSpace args = withNoBody "vspace" vspace

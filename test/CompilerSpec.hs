@@ -192,9 +192,25 @@ compileBuiltinSpec = do
 
     describe "'img'" $ do
         it "generates an instruction to show the image" $
-            do
-                AST.Call "image" (M.fromList [("path", Runtime.Filepath "path.png")]) []
-                `shouldCompileTo` [Runtime.Image "path.png"]
+            AST.Call "image" (M.fromList [("path", Runtime.Filepath "path.png")]) []
+                `shouldCompileTo` [Runtime.Exec $ "kitten icat --align center " <> "path.png"]
+
+    describe "'exec'" $ do
+        it "generates an instruction to execute a command" $
+            AST.Call "exec" (M.fromList [("cmd", Runtime.Literal "cmd and args")]) []
+                `shouldCompileTo` [Runtime.Exec "cmd and args"]
+        it "resets the terminal for interactive programs" $
+            AST.Call
+                "exec"
+                ( M.fromList
+                    [ ("cmd", Runtime.Literal "cmd")
+                    , ("interactive", Runtime.Toggle)
+                    ]
+                )
+                []
+                `shouldCompileTo` [ Runtime.Exec "cmd"
+                                  , Runtime.Reset
+                                  ]
 
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle
