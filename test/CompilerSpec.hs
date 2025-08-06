@@ -260,6 +260,44 @@ compileBuiltinSpec = do
                                       , Runtime.Output $ padding <> "- " <> citation
                                       ]
 
+        it "styles the quotation marks" $
+            AST.Call "quote" (M.fromList [("punctuationColor", Runtime.RGB 127 127 127)]) [AST.Literal "a quote"]
+                `shouldCompileTo` [ Runtime.Center 9
+                                  , Runtime.SaveStyle
+                                  , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
+                                  , Runtime.Output "“"
+                                  , Runtime.RestoreStyle
+                                  , Runtime.Output "a quote"
+                                  , Runtime.SaveStyle
+                                  , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
+                                  , Runtime.Output "”"
+                                  , Runtime.RestoreStyle
+                                  ]
+
+        it "styles the quotation marks with citations" $
+            AST.Call
+                "quote"
+                ( M.fromList
+                    [ ("citation", Runtime.Literal "person")
+                    , ("punctuationColor", Runtime.RGB 127 127 127)
+                    ]
+                )
+                [AST.Literal "a longish quote"]
+                `shouldCompileTo` [ Runtime.Center 17
+                                  , Runtime.SaveStyle
+                                  , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
+                                  , Runtime.Output "“"
+                                  , Runtime.RestoreStyle
+                                  , Runtime.Output "a longish quote"
+                                  , Runtime.SaveStyle
+                                  , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
+                                  , Runtime.Output "”"
+                                  , Runtime.RestoreStyle
+                                  , Runtime.Newline
+                                  , Runtime.Center 17
+                                  , Runtime.Output "         - person"
+                                  ]
+
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle
 

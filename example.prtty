@@ -1,6 +1,8 @@
 .style [ bg=#0295b6; fg=#f5f500]
+.margin [ top=1/5 ; left=1/5 ]
 .slide
-    .vcenter << .center << .type << this is a title slide
+    .quote[citation="some rando on r/golang" ; punctuationColor=#777777 ]
+        I don't much care for abstraction
 
 .slide
     .vcenter 

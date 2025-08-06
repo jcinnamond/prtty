@@ -43,11 +43,15 @@ compileBuiltin x = unrecognised x
 compileQuote :: AST.Args -> [AST.Expr] -> Compiler
 compileQuote _ [] = pure V.empty
 compileQuote args body = case M.lookup "citation" args of
-    Nothing -> compileCenter $ AST.Literal "“" : body <> [AST.Literal "”"]
+    Nothing ->
+        compileCenter $
+            style "“" (M.lookup "punctuationColor" args)
+                <> body
+                <> style "”" (M.lookup "punctuationColor" args)
     (Just (Runtime.Literal cite)) -> do
         let plen = width body - T.length cite
             padding = T.replicate plen " "
-        q <- compileQuote M.empty body
+        q <- compileQuote (M.delete "citation" args) body
         pure $
             q
                 <> V.fromList
@@ -56,6 +60,10 @@ compileQuote args body = case M.lookup "citation" args of
                     , Runtime.Output $ padding <> "- " <> cite
                     ]
     _ -> Left "invalid citation"
+  where
+    style :: Text -> Maybe Value -> [AST.Expr]
+    style t Nothing = [AST.Literal t]
+    style t (Just arg) = [AST.Call "style" (M.fromList [("fg", arg)]) [AST.Literal t]]
 
 compileMoveTo :: AST.Args -> [AST.Expr] -> Compiler
 compileMoveTo args body = do
@@ -124,7 +132,7 @@ width :: [AST.Expr] -> Int
 width [] = 0
 width (AST.Newline : xs) = width xs
 width (AST.Literal l : xs) = T.length l + width xs
-width (AST.Call _ _ body : xs) = width body + length xs
+width (AST.Call _ _ body : xs) = width body + width xs
 
 compileVCenter :: [AST.Expr] -> Compiler
 compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs
