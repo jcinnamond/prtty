@@ -37,7 +37,25 @@ compileBuiltin "style" = compileStyle
 compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin "exec" = compileExec
 compileBuiltin "image" = compileImage
+compileBuiltin "quote" = compileQuote
 compileBuiltin x = unrecognised x
+
+compileQuote :: AST.Args -> [AST.Expr] -> Compiler
+compileQuote _ [] = pure V.empty
+compileQuote args body = case M.lookup "citation" args of
+    Nothing -> compileCenter $ AST.Literal "“" : body <> [AST.Literal "”"]
+    (Just (Runtime.Literal cite)) -> do
+        let plen = width body - T.length cite
+            padding = T.replicate plen " "
+        q <- compileQuote M.empty body
+        pure $
+            q
+                <> V.fromList
+                    [ Runtime.Newline
+                    , Runtime.Center $ width body + 2
+                    , Runtime.Output $ padding <> "- " <> cite
+                    ]
+    _ -> Left "invalid citation"
 
 compileMoveTo :: AST.Args -> [AST.Expr] -> Compiler
 compileMoveTo args body = do
@@ -101,11 +119,12 @@ compileType _ _ = Left "type only accepts a single literal"
 
 compileCenter :: [AST.Expr] -> Compiler
 compileCenter exprs = compileWithBody (Runtime.Center (width exprs)) exprs
-  where
-    width [] = 0
-    width (AST.Newline : xs) = width xs
-    width (AST.Literal l : xs) = T.length l + width xs
-    width (AST.Call _ _ body : xs) = width body + length xs
+
+width :: [AST.Expr] -> Int
+width [] = 0
+width (AST.Newline : xs) = width xs
+width (AST.Literal l : xs) = T.length l + width xs
+width (AST.Call _ _ body : xs) = width body + length xs
 
 compileVCenter :: [AST.Expr] -> Compiler
 compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs

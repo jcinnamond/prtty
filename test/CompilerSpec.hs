@@ -2,6 +2,7 @@ module CompilerSpec (spec) where
 
 import Compiler.Internal (compileExpression)
 import Data.Map qualified as M
+import Data.Text qualified as T
 import Data.Vector qualified as V
 import Parser.AST qualified as AST
 import Runtime.Instructions qualified as Runtime
@@ -231,6 +232,33 @@ compileBuiltinSpec = do
                 `shouldCompileTo` [ Runtime.Exec "cmd"
                                   , Runtime.Reset
                                   ]
+
+    describe "'quote'" $ do
+        it "compiles quotes without an author" $ do
+            AST.Call "quote" M.empty [AST.Literal "a quote"]
+                `shouldCompileTo` [ Runtime.Center 9
+                                  , Runtime.Output "“"
+                                  , Runtime.Output "a quote"
+                                  , Runtime.Output "”"
+                                  ]
+        it "compiles quotes with an author" $
+            let q = "A quote that is longer than the author name"
+                qlen = T.length q + 2
+                citation = "Betty Author"
+                plen = qlen - T.length citation - 2
+                padding = T.replicate plen " "
+             in AST.Call
+                    "quote"
+                    (M.fromList [("citation", Runtime.Literal citation)])
+                    [AST.Literal q]
+                    `shouldCompileTo` [ Runtime.Center qlen
+                                      , Runtime.Output "“"
+                                      , Runtime.Output q
+                                      , Runtime.Output "”"
+                                      , Runtime.Newline
+                                      , Runtime.Center qlen
+                                      , Runtime.Output $ padding <> "- " <> citation
+                                      ]
 
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle
