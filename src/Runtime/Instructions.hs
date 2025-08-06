@@ -1,5 +1,6 @@
 module Runtime.Instructions (
     Instruction (..),
+    Anchor (..),
     Style (..),
     nullStyle,
     emptyStyle,
@@ -16,8 +17,9 @@ data Instruction
     | StoreBackMarker
     | SetTopMargin Value
     | SetLeftMargin Value
-    | Home
     | WaitForInput
+    | Home
+    | MoveTo (Maybe Value) (Maybe Value) Anchor -- MoveTo y x
     | VCenter Int
     | Center Int
     | VSpace Int
@@ -27,6 +29,9 @@ data Instruction
     | RestoreStyle
     | Exec Text
     | Reset
+    deriving stock (Show, Eq)
+
+data Anchor = TopLeft | BottomRight
     deriving stock (Show, Eq)
 
 data Style

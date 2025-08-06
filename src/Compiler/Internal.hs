@@ -24,10 +24,11 @@ compileExpression (AST.Call name args body) = compileBuiltin name args body
 
 compileBuiltin :: Text -> AST.Args -> [AST.Expr] -> Compiler
 compileBuiltin "clear" = standalone "clear" compileClear
-compileBuiltin "home" = standalone "home" $ V.singleton Runtime.Home
 compileBuiltin "margin" = compileMargin
 compileBuiltin "nl" = standalone "nl" $ V.singleton $ Runtime.Output "\n"
 compileBuiltin "wait" = standalone "wait" compileWait
+compileBuiltin "home" = standalone "home" $ V.singleton Runtime.Home
+compileBuiltin "moveTo" = compileMoveTo
 compileBuiltin "center" = withNoArgs "center" compileCenter
 compileBuiltin "vcenter" = withNoArgs "vcenter" compileVCenter
 compileBuiltin "vspace" = compileVSpace
@@ -37,6 +38,18 @@ compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin "exec" = compileExec
 compileBuiltin "image" = compileImage
 compileBuiltin x = unrecognised x
+
+compileMoveTo :: AST.Args -> [AST.Expr] -> Compiler
+compileMoveTo args body = do
+    let anchor = getAnchor
+        x = M.lookup "x" args
+        y = M.lookup "y" args
+    withNoBody "moveTo" (V.singleton $ Runtime.MoveTo y x anchor) body
+  where
+    getAnchor :: Runtime.Anchor
+    getAnchor = case M.lookup "BottomRight" args of
+        (Just Runtime.Toggle) -> Runtime.BottomRight
+        _ -> Runtime.TopLeft
 
 compileExec :: AST.Args -> [AST.Expr] -> Compiler
 compileExec args body = case M.lookup "cmd" args of

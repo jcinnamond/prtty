@@ -10,8 +10,9 @@ import Data.Text.Encoding qualified as TE
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
 import Data.Vector qualified as V
-import Runtime.Instructions (Instruction (..), Style (..))
+import Runtime.Instructions (Anchor (..), Instruction (..), Style (..))
 import Runtime.Value (Value (..), nanoseconds)
+import Runtime.Value qualified as RuntimeValue
 import System.Console.Terminal.Size qualified as TSize
 import System.IO (BufferMode (..), hFlush, hSetBuffering, hSetEcho, stdin, stdout)
 import VT qualified
@@ -104,10 +105,11 @@ runInstruction Newline = out "\n" >> moveToLeftMargin
 runInstruction StoreBackMarker = modify storeBackMarker
 runInstruction (SetTopMargin x) = modify $ setTopMargin x
 runInstruction (SetLeftMargin x) = modify $ setLeftMargin x
+runInstruction Home = runHome
+runInstruction (MoveTo y x anchor) = runMoveTo y x anchor
 runInstruction (Center x) = runCenter x
 runInstruction (VCenter x) = runVCenter x
 runInstruction (VSpace x) = out (VT.moveDown x) >> moveToLeftMargin
-runInstruction Home = runHome
 runInstruction WaitForInput = runWaitForInput
 runInstruction (Pause d) = liftIO $ threadDelay $ nanoseconds d
 runInstruction (SetStyle style) = runSetStyle style
@@ -115,6 +117,36 @@ runInstruction SaveStyle = modify storeCurrentStyle
 runInstruction RestoreStyle = runRestoreStyles
 runInstruction (Exec cmd) = liftIO $ Cmd.run $ TE.encodeUtf8 cmd
 runInstruction Reset = runReset
+
+runMoveTo :: Maybe Value -> Maybe Value -> Anchor -> Runtime
+runMoveTo (Just y) Nothing anchor = moveToY y anchor
+runMoveTo Nothing (Just x) anchor = moveToX x anchor
+runMoveTo (Just y) (Just x) anchor = moveToYX y x anchor
+runMoveTo Nothing Nothing _ = pure ()
+
+moveToY :: Value -> Anchor -> Runtime
+moveToY y anchor = do
+    height <- gets height
+    margin <- gets leftMargin
+    out $ VT.moveToRow (resolve y anchor height) <> VT.moveToCol margin
+
+moveToX :: Value -> Anchor -> Runtime
+moveToX x anchor = do
+    width <- gets width
+    out $ VT.moveToCol (resolve x anchor width)
+
+moveToYX :: Value -> Value -> Anchor -> Runtime
+moveToYX y x anchor = do
+    height <- gets height
+    width <- gets width
+    out $ VT.moveTo (resolve y anchor height) (resolve x anchor width)
+
+resolve :: Value -> Anchor -> Int -> Int
+resolve (RuntimeValue.Number x) TopLeft _ = x
+resolve (RuntimeValue.Rational n d) TopLeft limit = limit * n `div` d
+resolve (RuntimeValue.Percentage x) TopLeft limit = resolve (RuntimeValue.Rational x 100) TopLeft limit
+resolve v BottomRight limit = limit - resolve v TopLeft limit
+resolve v _ _ = error $ "can't move to " <> show v
 
 runReset :: Runtime
 runReset = do

@@ -17,6 +17,7 @@ module VT (
     fgColor,
     bgColor,
     resetBold,
+    moveToRow,
 )
 where
 
@@ -32,8 +33,9 @@ clear = esc <> "2J"
 moveTo :: Int -> Int -> Text
 moveTo y x = esc <> T.show y <> ";" <> T.show x <> "f"
 
-moveToCol :: Int -> Text
-moveToCol y = esc <> T.show y <> "G"
+moveToCol, moveToRow :: Int -> Text
+moveToCol x = esc <> T.show x <> "G"
+moveToRow y = moveTo 0 0 <> esc <> T.show (y - 1) <> "B"
 
 moveRight, moveDown :: Int -> Text
 moveRight x = esc <> T.show x <> "C"

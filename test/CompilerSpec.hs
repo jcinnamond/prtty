@@ -82,6 +82,26 @@ compileBuiltinSpec = do
     it "compiles 'home'" $ do
         AST.Call "home" M.empty [] `shouldCompileTo` [Runtime.Home]
 
+    describe "'moveTo'" $ do
+        describe "without an anchor" $ do
+            it "uses TopLeft as the anchor" $ do
+                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5)]) []
+                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.TopLeft]
+            it "compiles with just x coordinates" $ do
+                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10)]) []
+                    `shouldCompileTo` [Runtime.MoveTo Nothing (Just $ Runtime.Number 10) Runtime.TopLeft]
+            it "compiles with just y coordinates" $ do
+                AST.Call "moveTo" (M.fromList [("y", Runtime.Number 5)]) []
+                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) Nothing Runtime.TopLeft]
+        describe "with an explicit top left anchor" $ do
+            it "compiles with the anchor" $ do
+                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("TopLeft", Runtime.Toggle)]) []
+                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.TopLeft]
+        describe "with an explicit bottom right anchor" $ do
+            it "compiles with the anchor" $ do
+                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("BottomRight", Runtime.Toggle)]) []
+                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.BottomRight]
+
     it "compiles 'center'" $ do
         AST.Call "center" M.empty [] `shouldCompileTo` [Runtime.Center 0]
         AST.Call "center" M.empty [AST.Literal "hi ", AST.Literal "there", AST.Newline]
