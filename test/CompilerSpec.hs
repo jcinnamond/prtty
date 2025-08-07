@@ -332,6 +332,47 @@ compileBuiltinSpec = do
                                   , Runtime.Newline
                                   ]
 
+    describe "'backspace'" $ do
+        it "deletes characters backwards, pausing between" $ do
+            AST.Call "backspace" (M.fromList [("count", Runtime.Number 3)]) []
+                `shouldCompileTo` [ Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  ]
+
+        it "deletes the length of a given literal" $ do
+            AST.Call "backspace" M.empty [AST.Literal "hi"]
+                `shouldCompileTo` [ Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  ]
+
+        it "allows the pause time to be overridden" $ do
+            AST.Call
+                "backspace"
+                ( M.fromList
+                    [ ("delay", Runtime.Duration (Runtime.Milliseconds 2))
+                    , ("count", Runtime.Number 2)
+                    ]
+                )
+                []
+                `shouldCompileTo` [ Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  ]
+
+            AST.Call "backspace" (M.fromList [("delay", Runtime.Duration (Runtime.Milliseconds 2))]) [AST.Literal "hi"]
+                `shouldCompileTo` [ Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  ]
+
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle
 

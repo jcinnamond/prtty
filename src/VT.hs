@@ -18,6 +18,8 @@ module VT (
     bgColor,
     resetBold,
     moveToRow,
+    moveLeft,
+    moveUp,
 )
 where
 
@@ -37,9 +39,11 @@ moveToCol, moveToRow :: Int -> Text
 moveToCol x = esc <> T.show x <> "G"
 moveToRow y = moveTo 0 0 <> esc <> T.show (y - 1) <> "B"
 
-moveRight, moveDown :: Int -> Text
+moveRight, moveLeft, moveDown, moveUp :: Int -> Text
 moveRight x = esc <> T.show x <> "C"
+moveLeft x = esc <> T.show x <> "D"
 moveDown x = esc <> T.show x <> "B"
+moveUp x = esc <> T.show x <> "A"
 
 altBuffer, noAltBuffer :: Text
 altBuffer = esc <> "?1049h"

@@ -39,7 +39,28 @@ compileBuiltin "exec" = compileExec
 compileBuiltin "image" = compileImage
 compileBuiltin "quote" = compileQuote
 compileBuiltin "list" = compileList
+compileBuiltin "backspace" = compileBackspace
 compileBuiltin x = unrecognised x
+
+compileBackspace :: AST.Args -> [AST.Expr] -> Compiler
+compileBackspace args body = case M.lookup "count" args of
+    Nothing -> pure $ backspace $ width body
+    (Just (Runtime.Number c)) -> pure $ backspace c
+    x -> Left $ "invalid count given to backspace " <> T.show x
+  where
+    backspace :: Int -> Vector Instruction
+    backspace 0 = V.empty
+    backspace x =
+        V.fromList
+            [ Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+            , Runtime.Pause pauseDuration
+            ]
+            <> backspace (x - 1)
+
+    pauseDuration :: Runtime.Duration
+    pauseDuration = case M.lookup "delay" args of
+        Just (Runtime.Duration d) -> d
+        _ -> defaultDelay
 
 compileList :: AST.Args -> [AST.Expr] -> Compiler
 compileList args = showItems bullet
@@ -144,7 +165,7 @@ compileType args [AST.Literal t] = do
   where
     getPause :: Compiler
     getPause = case M.lookup "delay" args of
-        Nothing -> pure $ V.singleton $ Runtime.Pause $ Runtime.Milliseconds 50
+        Nothing -> pure $ V.singleton $ Runtime.Pause defaultDelay
         (Just (Runtime.Duration x)) -> pure $ V.singleton $ Runtime.Pause x
         _ -> Left "'type' only accepts a duration argument"
 compileType _ _ = Left "type only accepts a single literal"
@@ -209,6 +230,9 @@ compileStyle args body = do
         | otherwise -> do
             rest <- compileExpressions body
             pure $ V.fromList [Runtime.SaveStyle, Runtime.SetStyle style] <> rest <> V.singleton Runtime.RestoreStyle
+
+defaultDelay :: Runtime.Duration
+defaultDelay = Runtime.Milliseconds 50
 
 standalone :: Text -> Vector Instruction -> AST.Args -> [AST.Expr] -> Compiler
 standalone name = withNoArgs name . withNoBody name
