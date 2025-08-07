@@ -156,7 +156,9 @@ runReset = do
 moveToLeftMargin :: Runtime
 moveToLeftMargin = do
     margin <- gets leftMargin
-    when (margin > 1) $ out $ VT.moveRight $ margin - 1
+    when (margin > 1) $ do
+        out $ VT.moveToCol 0
+        out $ VT.moveRight $ margin - 1
 
 storeCurrentStyle :: Environment -> Environment
 storeCurrentStyle e = e{styleHistory = e.currentStyle : e.styleHistory}
