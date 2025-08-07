@@ -38,7 +38,29 @@ compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin "exec" = compileExec
 compileBuiltin "image" = compileImage
 compileBuiltin "quote" = compileQuote
+compileBuiltin "list" = compileList
 compileBuiltin x = unrecognised x
+
+compileList :: AST.Args -> [AST.Expr] -> Compiler
+compileList args = showItems bullet
+  where
+    bullet :: Vector Instruction
+    bullet = case M.lookup "bullet" args of
+        (Just (Runtime.Literal t)) -> V.singleton $ Runtime.Output $ t <> " "
+        _ -> V.empty
+
+    showItems :: Vector Instruction -> [AST.Expr] -> Compiler
+    showItems _ [] = pure V.empty
+    showItems b (h : t) = do
+        item <- compileExpression h
+        rest <- showItems bullet t
+        let wait = if null t then V.empty else V.singleton Runtime.WaitForInput
+        pure $
+            b
+                <> item
+                <> V.singleton Runtime.Newline
+                <> wait
+                <> rest
 
 compileQuote :: AST.Args -> [AST.Expr] -> Compiler
 compileQuote _ [] = pure V.empty

@@ -301,6 +301,37 @@ compileBuiltinSpec = do
                                   , Runtime.RestoreStyle
                                   ]
 
+    describe "'list'" $ do
+        it "waits between each item" $
+            do
+                AST.Call "list" M.empty [AST.Literal "first", AST.Literal "second", AST.Literal "third"]
+                `shouldCompileTo` [ Runtime.Output "first"
+                                  , Runtime.Newline
+                                  , Runtime.WaitForInput
+                                  , Runtime.Output "second"
+                                  , Runtime.Newline
+                                  , Runtime.WaitForInput
+                                  , Runtime.Output "third"
+                                  , Runtime.Newline
+                                  ]
+
+        it "prefixes a bullet point" $
+            do
+                AST.Call
+                    "list"
+                    (M.fromList [("bullet", Runtime.Literal "*")])
+                    [ AST.Literal "first"
+                    , AST.Literal "second"
+                    ]
+                `shouldCompileTo` [ Runtime.Output "* "
+                                  , Runtime.Output "first"
+                                  , Runtime.Newline
+                                  , Runtime.WaitForInput
+                                  , Runtime.Output "* "
+                                  , Runtime.Output "second"
+                                  , Runtime.Newline
+                                  ]
+
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle
 
