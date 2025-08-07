@@ -44,26 +44,28 @@ compileQuote :: AST.Args -> [AST.Expr] -> Compiler
 compileQuote _ [] = pure V.empty
 compileQuote args body = case M.lookup "citation" args of
     Nothing ->
-        compileCenter $
-            style "“" (M.lookup "punctuationColor" args)
-                <> body
-                <> style "”" (M.lookup "punctuationColor" args)
+        compileCenter $ style "“" <> body <> style "”"
     (Just (Runtime.Literal cite)) -> do
         let plen = width body - T.length cite
             padding = T.replicate plen " "
         q <- compileQuote (M.delete "citation" args) body
+        styledCitation <- compileExpressions $ style $ padding <> "- " <> cite
         pure $
             q
                 <> V.fromList
                     [ Runtime.Newline
                     , Runtime.Center $ width body + 2
-                    , Runtime.Output $ padding <> "- " <> cite
                     ]
+                <> styledCitation
     _ -> Left "invalid citation"
   where
-    style :: Text -> Maybe Value -> [AST.Expr]
-    style t Nothing = [AST.Literal t]
-    style t (Just arg) = [AST.Call "style" (M.fromList [("fg", arg)]) [AST.Literal t]]
+    style :: Text -> [AST.Expr]
+    style t = case altColor of
+        Nothing -> [AST.Literal t]
+        (Just arg) -> [AST.Call "style" (M.fromList [("fg", arg)]) [AST.Literal t]]
+
+    altColor :: Maybe Value
+    altColor = M.lookup "altColor" args
 
 compileMoveTo :: AST.Args -> [AST.Expr] -> Compiler
 compileMoveTo args body = do

@@ -261,7 +261,7 @@ compileBuiltinSpec = do
                                       ]
 
         it "styles the quotation marks" $
-            AST.Call "quote" (M.fromList [("punctuationColor", Runtime.RGB 127 127 127)]) [AST.Literal "a quote"]
+            AST.Call "quote" (M.fromList [("altColor", Runtime.RGB 127 127 127)]) [AST.Literal "a quote"]
                 `shouldCompileTo` [ Runtime.Center 9
                                   , Runtime.SaveStyle
                                   , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
@@ -274,12 +274,12 @@ compileBuiltinSpec = do
                                   , Runtime.RestoreStyle
                                   ]
 
-        it "styles the quotation marks with citations" $
+        it "styles the quotation marks and citation" $
             AST.Call
                 "quote"
                 ( M.fromList
                     [ ("citation", Runtime.Literal "person")
-                    , ("punctuationColor", Runtime.RGB 127 127 127)
+                    , ("altColor", Runtime.RGB 127 127 127)
                     ]
                 )
                 [AST.Literal "a longish quote"]
@@ -295,7 +295,10 @@ compileBuiltinSpec = do
                                   , Runtime.RestoreStyle
                                   , Runtime.Newline
                                   , Runtime.Center 17
+                                  , Runtime.SaveStyle
+                                  , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
                                   , Runtime.Output "         - person"
+                                  , Runtime.RestoreStyle
                                   ]
 
 nostyle :: Runtime.Style
