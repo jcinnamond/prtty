@@ -198,7 +198,7 @@ withNoArgs name f args
 
 withNoBody :: Text -> Vector Instruction -> [AST.Expr] -> Compiler
 withNoBody _ f [] = pure f
-withNoBody name _ body = Left $ "unexpected args when calling '" <> name <> "': " <> T.show body
+withNoBody name _ body = Left $ "unexpected body when calling '" <> name <> "': " <> T.show body
 
 compileWithBody :: Instruction -> [AST.Expr] -> Compiler
 compileWithBody i [] = pure $ V.singleton i
