@@ -19,6 +19,7 @@ compileExpressions exprs = V.concat <$> traverse compileExpression exprs
 
 compileExpression :: AST.Expr -> Compiler
 compileExpression (AST.Literal t) = pure $ V.singleton $ Runtime.Output t
+compileExpression (AST.LiteralLine t) = pure $ V.fromList [Runtime.Output t, Runtime.Newline]
 compileExpression AST.Newline = pure $ V.singleton Runtime.Newline
 compileExpression (AST.Call name args body) = compileBuiltin name args body
 
@@ -181,8 +182,10 @@ compileSlide body = do
     pure $ compileClear <> rest <> compileWait
 
 compileType :: AST.Args -> [AST.Expr] -> Compiler
-compileType args [AST.Literal t] = do
+compileType _ [] = pure V.empty
+compileType args (AST.Literal t : body) = do
     pause <- getPause
+    rest <- compileType args body
     pure $
         T.foldl'
             ( \is c ->
@@ -190,13 +193,32 @@ compileType args [AST.Literal t] = do
             )
             V.empty
             t
+            <> rest
   where
     getPause :: Compiler
     getPause = case M.lookup "delay" args of
         Nothing -> pure $ V.singleton $ Runtime.Pause defaultDelay
         (Just (Runtime.Duration x)) -> pure $ V.singleton $ Runtime.Pause x
         _ -> Left "'type' only accepts a duration argument"
-compileType _ _ = Left "type only accepts a single literal"
+compileType args (AST.LiteralLine t : body) = do
+    typeLiteral <- compileType args [AST.Literal t]
+    rest <- compileType args body
+    pure $ typeLiteral <> V.singleton Runtime.Newline <> rest
+compileType args (AST.Call cName cArgs cBody : body) = do
+    rest <- compileType args body
+    expr <- compileExpression $ AST.Call cName cArgs $ pushToLiteral (\l -> [AST.Call "type" args [l]]) cBody
+    pure $ expr <> rest
+compileType args (e : body) = do
+    rest <- compileType args body
+    expr <- compileExpression e
+    pure $ expr <> rest
+
+pushToLiteral :: (AST.Expr -> [AST.Expr]) -> [AST.Expr] -> [AST.Expr]
+pushToLiteral _ [] = []
+pushToLiteral f (l@(AST.Literal _) : body) = f l <> pushToLiteral f body
+pushToLiteral f (l@(AST.LiteralLine _) : body) = f l <> pushToLiteral f body
+pushToLiteral f (AST.Call name args b : body) = AST.Call name args (pushToLiteral f b) : pushToLiteral f body
+pushToLiteral f (e : es) = e : pushToLiteral f es
 
 compileCenter :: [AST.Expr] -> Compiler
 compileCenter exprs = compileWithBody (Runtime.Center (width exprs)) exprs
@@ -205,6 +227,7 @@ width :: [AST.Expr] -> Int
 width [] = 0
 width (AST.Newline : xs) = width xs
 width (AST.Literal l : xs) = T.length l + width xs
+width (AST.LiteralLine l : xs) = T.length l + width xs
 width (AST.Call _ _ body : xs) = width body + width xs
 
 compileVCenter :: [AST.Expr] -> Compiler
@@ -214,6 +237,7 @@ compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs
     height [] = 0
     height (AST.Newline : xs) = 1 + height xs
     height (AST.Literal _ : xs) = height xs
+    height (AST.LiteralLine _ : xs) = 1 + height xs
     height (AST.Call "vspace" args _ : xs) = vspace (M.lookup "lines" args) + height xs
       where
         vspace (Just (Runtime.Number x)) = x

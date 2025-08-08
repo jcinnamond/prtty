@@ -60,6 +60,15 @@ parseLiteralsSpec = do
             parse [r|"hello < there"|] `shouldParse` "hello < there"
             parse [r|"hello << there"|] `shouldParse` "hello << there"
 
+    describe "literal lines" $ do
+        let parse = MP.parse Parser.literalLine ""
+        it "extracts text" $ do
+            parse "> some text" `shouldParse` "some text"
+            parse ">some text" `shouldParse` "some text"
+
+        it "only eats the first space" $ do
+            parse ">     some text" `shouldParse` "    some text"
+
 parseIdentifier :: Spec
 parseIdentifier = do
     describe "identifiers" $ do
@@ -188,6 +197,8 @@ parsePresentation = do
         let parse = MP.parse Parser.presentation ""
         it "parses a single literal" $ do
             parse "some text" `shouldParse` AST.Presentation [AST.PExpr $ AST.Literal "some text"]
+        it "parses a literal line" $ do
+            parse "> some text" `shouldParse` AST.Presentation [AST.PExpr $ AST.LiteralLine "some text"]
         it "parses a single call" $ do
             parse ".clear" `shouldParse` AST.Presentation [AST.PExpr $ AST.Call "clear" M.empty []]
         it "parses a single definition" $ do

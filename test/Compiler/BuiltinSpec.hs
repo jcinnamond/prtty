@@ -163,12 +163,107 @@ spec = do
                                   , Runtime.Output "e"
                                   , Runtime.Pause (Runtime.Milliseconds 50)
                                   ]
+
+        it "types multiple literals" $ do
+            AST.Call "type" M.empty [AST.Literal "hi", AST.Literal "there"]
+                `shouldCompileTo` [ Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "i"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "t"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "r"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  ]
+
+        it "passes through non-literal expressions" $ do
+            AST.Call "type" M.empty [AST.Literal "hi", AST.Call "wait" M.empty [], AST.Literal "there"]
+                `shouldCompileTo` [ Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "i"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.WaitForInput
+                                  , Runtime.Output "t"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "r"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  ]
+
+        it "pushes the type down to embedded literals" $ do
+            AST.Call
+                "type"
+                M.empty
+                [ AST.Literal "he"
+                , AST.Call
+                    "style"
+                    (M.fromList [("fg", Runtime.RGB 0 0 0)])
+                    [ AST.Literal "llo"
+                    ]
+                , AST.Literal "there"
+                ]
+                `shouldCompileTo` [ Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.SaveStyle
+                                  , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 0 0 0})
+                                  , Runtime.Output "l"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "l"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "o"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.RestoreStyle
+                                  , Runtime.Output "t"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "r"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  ]
+
         it "compiles with a custom delay" $ do
             AST.Call "type" (M.fromList [("delay", Runtime.Duration (Runtime.Seconds 1))]) [AST.Literal "hi"]
                 `shouldCompileTo` [ Runtime.Output "h"
                                   , Runtime.Pause (Runtime.Seconds 1)
                                   , Runtime.Output "i"
                                   , Runtime.Pause (Runtime.Seconds 1)
+                                  ]
+
+        it "types multiple literal lines" $ do
+            AST.Call "type" M.empty [AST.LiteralLine "hi", AST.LiteralLine "there"]
+                `shouldCompileTo` [ Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "i"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Newline
+                                  , Runtime.Output "t"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "h"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "r"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause (Runtime.Milliseconds 50)
+                                  , Runtime.Newline
                                   ]
 
     describe "'style'" $ do

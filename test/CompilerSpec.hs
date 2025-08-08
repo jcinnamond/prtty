@@ -21,6 +21,8 @@ compileLiteralSpec :: Spec
 compileLiteralSpec = do
     it "outputs the literal" $ do
         AST.Literal "some text" `shouldCompileTo` [Runtime.Output "some text"]
+    it "outputs text followed by a newline for a LiteralLine" $ do
+        AST.LiteralLine "some text" `shouldCompileTo` [Runtime.Output "some text", Runtime.Newline]
 
 compileNewlineSpec :: Spec
 compileNewlineSpec = do

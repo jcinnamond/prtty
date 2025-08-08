@@ -9,8 +9,8 @@ import Data.Void (Void)
 import Parser.AST (Args, Expr (..), Presentation (..), PresentationItem (..))
 import Runtime.Value (Duration (..), Value)
 import Runtime.Value qualified as Value
-import Text.Megaparsec (MonadParsec (takeWhile1P), Parsec, between, choice, eof, many, manyTill, sepBy, sepBy1, some, try, (<|>))
-import Text.Megaparsec.Char (alphaNumChar, char, hexDigitChar, hspace, printChar, space, string)
+import Text.Megaparsec (MonadParsec (takeWhile1P), Parsec, between, choice, eof, many, manyTill, optional, sepBy, sepBy1, some, try, (<|>))
+import Text.Megaparsec.Char (alphaNumChar, char, hexDigitChar, hspace, printChar, space, spaceChar, string)
 import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
@@ -34,6 +34,7 @@ expression =
     choice
         [ newline
         , call
+        , LiteralLine <$> literalLine
         , Literal <$> quotedLiteral
         , Literal <$> literal
         ]
@@ -156,6 +157,13 @@ filepath = do
 
 literal :: Parser Text
 literal = nonSpace <> (T.pack <$> many printChar)
+
+literalLine :: Parser Text
+literalLine = do
+    _ <- char '>' *> optional (char ' ')
+    leadingSpace <- T.pack <$> many spaceChar
+    rest <- literal
+    pure $ leadingSpace <> rest
 
 quotedLiteral :: Parser Text
 quotedLiteral = T.pack <$> (char '"' >> manyTill L.charLiteral (char '"'))

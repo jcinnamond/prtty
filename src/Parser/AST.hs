@@ -20,6 +20,7 @@ data PresentationItem
 
 data Expr
     = Literal Text
+    | LiteralLine Text
     | Newline
     | Call Text Args [Expr]
     deriving stock (Show, Eq)
