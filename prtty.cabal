@@ -38,9 +38,6 @@ library
     Compiler.Internal
     Compiler.Internal.References
     Options
-    PDL
-    PDL.Internal
-    PDL.Types
     Parser.AST
     Parser.Internal
     Parser.Parser
@@ -78,7 +75,6 @@ test-suite prtty-test
     Compiler.BuiltinSpec
     Compiler.ReferencesSpec
     CompilerSpec
-    PDLSpec
     ParserSpec
 
   build-depends:
