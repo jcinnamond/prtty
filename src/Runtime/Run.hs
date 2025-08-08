@@ -127,26 +127,31 @@ runMoveTo Nothing Nothing _ = pure ()
 moveToY :: Value -> Anchor -> Runtime
 moveToY y anchor = do
     height <- gets height
-    margin <- gets leftMargin
-    out $ VT.moveToRow (resolve y anchor height) <> VT.moveToCol margin
+    topMargin <- gets topMargin
+    leftMargin <- gets leftMargin
+    out $ VT.moveToRow (resolve y anchor height topMargin) <> VT.moveToCol leftMargin
 
 moveToX :: Value -> Anchor -> Runtime
 moveToX x anchor = do
     width <- gets width
-    out $ VT.moveToCol (resolve x anchor width)
+    leftMargin <- gets leftMargin
+    out $ VT.moveToCol (resolve x anchor width leftMargin)
 
 moveToYX :: Value -> Value -> Anchor -> Runtime
 moveToYX y x anchor = do
     height <- gets height
+    topMargin <- gets topMargin
     width <- gets width
-    out $ VT.moveTo (resolve y anchor height) (resolve x anchor width)
+    leftMargin <- gets leftMargin
+    out $ VT.moveTo (resolve y anchor height topMargin) (resolve x anchor width leftMargin)
 
-resolve :: Value -> Anchor -> Int -> Int
-resolve (RuntimeValue.Number x) TopLeft _ = x
-resolve (RuntimeValue.Rational n d) TopLeft limit = limit * n `div` d
-resolve (RuntimeValue.Percentage x) TopLeft limit = resolve (RuntimeValue.Rational x 100) TopLeft limit
-resolve v BottomRight limit = limit - resolve v TopLeft limit
-resolve v _ _ = error $ "can't move to " <> show v
+resolve :: Value -> Anchor -> Int -> Int -> Int
+resolve (RuntimeValue.Number x) TopLeft _ _ = x
+resolve (RuntimeValue.Rational n d) TopLeft limit _ = limit * n `div` d
+resolve (RuntimeValue.Percentage x) TopLeft limit margin = resolve (RuntimeValue.Rational x 100) TopLeft limit margin
+resolve v Margin limit margin = resolve v TopLeft limit margin + margin
+resolve v BottomRight limit margin = limit - resolve v TopLeft limit margin
+resolve v _ _ _ = error $ "can't move to " <> show v
 
 runReset :: Runtime
 runReset = do

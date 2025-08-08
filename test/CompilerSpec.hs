@@ -64,7 +64,7 @@ compileSpec = do
                     [ Runtime.MoveTo
                         Nothing
                         (Just $ Runtime.Number 10)
-                        Runtime.TopLeft
+                        Runtime.Margin
                     ]
                 )
 

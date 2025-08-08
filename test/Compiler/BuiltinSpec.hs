@@ -71,21 +71,25 @@ spec = do
         describe "without an anchor" $ do
             it "uses TopLeft as the anchor" $ do
                 AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5)]) []
-                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.TopLeft]
+                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.Margin]
             it "compiles with just x coordinates" $ do
                 AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10)]) []
-                    `shouldCompileTo` [Runtime.MoveTo Nothing (Just $ Runtime.Number 10) Runtime.TopLeft]
+                    `shouldCompileTo` [Runtime.MoveTo Nothing (Just $ Runtime.Number 10) Runtime.Margin]
             it "compiles with just y coordinates" $ do
                 AST.Call "moveTo" (M.fromList [("y", Runtime.Number 5)]) []
-                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) Nothing Runtime.TopLeft]
+                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) Nothing Runtime.Margin]
         describe "with an explicit top left anchor" $ do
             it "compiles with the anchor" $ do
-                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("TopLeft", Runtime.Toggle)]) []
+                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("anchor", Runtime.Literal "TopLeft")]) []
                     `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.TopLeft]
         describe "with an explicit bottom right anchor" $ do
             it "compiles with the anchor" $ do
-                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("BottomRight", Runtime.Toggle)]) []
+                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("anchor", Runtime.Literal "BottomRight")]) []
                     `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.BottomRight]
+        describe "with an explicit margin anchor" $ do
+            it "compiles with the anchor" $ do
+                AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("anchor", Runtime.Literal "Margin")]) []
+                    `shouldCompileTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.Margin]
 
     it "compiles 'center'" $ do
         AST.Call "center" M.empty [] `shouldCompileTo` [Runtime.Center 0]

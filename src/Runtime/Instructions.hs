@@ -31,7 +31,7 @@ data Instruction
     | Reset
     deriving stock (Show, Eq)
 
-data Anchor = TopLeft | BottomRight
+data Anchor = TopLeft | BottomRight | Margin
     deriving stock (Show, Eq)
 
 data Style

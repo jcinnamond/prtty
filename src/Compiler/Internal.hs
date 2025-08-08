@@ -141,15 +141,18 @@ compileQuote args body = case M.lookup "citation" args of
 
 compileMoveTo :: AST.Args -> [AST.Expr] -> Compiler
 compileMoveTo args body = do
-    let anchor = getAnchor
-        x = M.lookup "x" args
+    anchor <- getAnchor
+    let x = M.lookup "x" args
         y = M.lookup "y" args
     withNoBody "moveTo" (V.singleton $ Runtime.MoveTo y x anchor) body
   where
-    getAnchor :: Runtime.Anchor
-    getAnchor = case M.lookup "BottomRight" args of
-        (Just Runtime.Toggle) -> Runtime.BottomRight
-        _ -> Runtime.TopLeft
+    getAnchor :: Either Text Runtime.Anchor
+    getAnchor = case M.lookup "anchor" args of
+        (Just (Runtime.Literal "BottomRight")) -> pure Runtime.BottomRight
+        (Just (Runtime.Literal "Margin")) -> pure Runtime.Margin
+        (Just (Runtime.Literal "TopLeft")) -> pure Runtime.TopLeft
+        Nothing -> pure Runtime.Margin
+        v -> Left $ "unrecognised anchor: " <> T.show v
 
 compileExec :: AST.Args -> [AST.Expr] -> Compiler
 compileExec args body = case M.lookup "cmd" args of
