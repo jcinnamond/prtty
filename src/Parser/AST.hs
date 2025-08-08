@@ -1,6 +1,7 @@
 module Parser.AST (
     Expr (..),
     Presentation (..),
+    PresentationItem (..),
     Number (..),
     Args,
 ) where
@@ -10,8 +11,13 @@ import Data.Text
 import PrettyPrint (Empty, PrettyPrint)
 import Runtime.Value
 
-newtype Presentation = Presentation {presentation :: [Expr]}
+newtype Presentation = Presentation {presentation :: [PresentationItem]}
     deriving newtype (Show, Eq, Semigroup, Empty, PrettyPrint)
+
+data PresentationItem
+    = PDef Text Value
+    | PExpr Expr
+    deriving stock (Show, Eq)
 
 data Expr
     = Literal Text

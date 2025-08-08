@@ -6,20 +6,28 @@ import Data.Map qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
-import Parser.AST (Args, Expr (..), Presentation (..))
+import Parser.AST (Args, Expr (..), Presentation (..), PresentationItem (..))
 import Runtime.Value (Duration (..), Value)
 import Runtime.Value qualified as Value
 import Text.Megaparsec (MonadParsec (takeWhile1P), Parsec, between, choice, eof, many, manyTill, sepBy, sepBy1, some, try, (<|>))
-import Text.Megaparsec.Char (alphaNumChar, char, eol, hexDigitChar, hspace, printChar, space, string)
+import Text.Megaparsec.Char (alphaNumChar, char, hexDigitChar, hspace, printChar, space, string)
 import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 
 presentation :: Parser Presentation
-presentation = Presentation . concat <$> many expressionChain <* eof
+presentation = Presentation . concat <$> many presentationItem <* eof
+
+presentationItem :: Parser [PresentationItem]
+presentationItem =
+    definitions
+        <|> (map PExpr <$> expressionChain)
+
+definitions :: Parser [PresentationItem]
+definitions = some (space *> definition <* space)
 
 expressionChain :: Parser [Expr]
-expressionChain = expression `sepBy1` (hspace <* char '<' <* hspace) <* many eol
+expressionChain = space *> expression `sepBy1` (hspace <* char '<' <* hspace) <* space
 
 expression :: Parser Expr
 expression =
@@ -32,6 +40,19 @@ expression =
 
 newline :: Parser Expr
 newline = string ".nl" >> pure Newline
+
+definition :: Parser PresentationItem
+definition = do
+    _ <- char '\\' <* hspace
+    name <- identifier <* hspace
+    _ <- char '=' <* hspace
+    PDef name <$> parseDefinitionBody
+  where
+    parseDefinitionBody :: Parser Value
+    parseDefinitionBody = parseValue
+
+reference :: Parser Text
+reference = char '$' *> identifier
 
 call :: Parser Expr
 call = L.indentBlock space p
@@ -67,17 +88,7 @@ args = matchArgs <|> pure M.empty
     matchArgWithValue = do
         name <- hspace *> identifier <* hspace
         _ <- char '=' <* hspace
-        v <-
-            choice
-                [ try $ uncurry Value.Rational <$> try rational
-                , try $ Value.Percentage <$> percentage
-                , try $ Value.Duration <$> duration
-                , uncurry3 Value.RGB <$> rgb
-                , Value.Number <$> L.decimal
-                , try $ Value.Filepath <$> filepath
-                , Value.Literal <$> identifier
-                , Value.Literal <$> quotedLiteral
-                ]
+        v <- parseValue
         _ <- hspace
         pure (name, v)
 
@@ -86,6 +97,20 @@ args = matchArgs <|> pure M.empty
         name <- hspace *> identifier <* hspace
         pure (name, Value.Toggle)
 
+parseValue :: Parser Value
+parseValue =
+    choice
+        [ try $ uncurry Value.Rational <$> try rational
+        , try $ Value.Percentage <$> percentage
+        , try $ Value.Duration <$> duration
+        , uncurry3 Value.RGB <$> rgb
+        , Value.Number <$> L.decimal
+        , try $ Value.Filepath <$> filepath
+        , Value.Literal <$> identifier
+        , Value.Literal <$> quotedLiteral
+        , Value.Reference <$> reference
+        ]
+  where
     uncurry3 :: forall a b c d. (a -> b -> c -> d) -> (a, b, c) -> d
     uncurry3 f (x, y, z) = f x y z
 

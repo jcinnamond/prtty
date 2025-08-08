@@ -3,7 +3,8 @@ module Compiler.Compiler (
 ) where
 
 import Compiler.Internal (Compiler, compileExpressions)
+import Compiler.Internal.References (resolveReferences)
 import Parser.AST (Presentation (..))
 
-compile :: Presentation -> Compiler
-compile (Presentation{presentation}) = compileExpressions presentation
+compile :: [Presentation] -> Compiler
+compile ps = resolveReferences ps >>= compileExpressions

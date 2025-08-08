@@ -15,6 +15,7 @@ data Value
     | Literal Text
     | Filepath Text
     | Toggle
+    | Reference Text
     deriving stock (Show, Eq)
 
 data Duration

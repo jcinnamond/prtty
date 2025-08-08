@@ -15,7 +15,7 @@ import VT qualified
 type Compiler = Either Text (Vector Instruction)
 
 compileExpressions :: [AST.Expr] -> Compiler
-compileExpressions exprs = V.concat <$> mapM compileExpression exprs
+compileExpressions exprs = V.concat <$> traverse compileExpression exprs
 
 compileExpression :: AST.Expr -> Compiler
 compileExpression (AST.Literal t) = pure $ V.singleton $ Runtime.Output t

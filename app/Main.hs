@@ -35,12 +35,12 @@ opts =
         (options <**> helper)
         (fullDesc <> progDesc "presentation software in your terminal")
 
-runParser :: Options -> App Presentation
+runParser :: Options -> App [Presentation]
 runParser o = do
     p <- liftIO $ parseFiles o.inputs
     handlingError p $ if o.debugAST then debug else pure
 
-runCompiler :: Options -> Presentation -> App (Vector Instruction)
+runCompiler :: Options -> [Presentation] -> App (Vector Instruction)
 runCompiler o p = do
     let ir = compile p
     handlingError ir $ if o.debugIR then debug else pure

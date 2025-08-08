@@ -6,18 +6,31 @@ import Data.Map qualified as M
 import Parser.AST qualified as AST
 import Parser.Internal qualified as Parser
 import Runtime.Value qualified as Runtime
-import Test.Hspec (Spec, describe, focus, it)
+import Test.Hspec (Spec, describe, it)
 import Test.Hspec.Megaparsec (shouldFailOn, shouldParse)
 import Text.Megaparsec qualified as MP
 import Text.RawString.QQ (r)
 
 spec :: Spec
-spec = focus $ do
+spec = do
     parseLiteralsSpec
     parseIdentifier
     parseArgs
     parseCall
+    parseDefinition
     parsePresentation
+
+parseDefinition :: Spec
+parseDefinition = do
+    describe "simple definition" $ do
+        let parse = MP.parse Parser.definition ""
+        it "parses value definitions" $ do
+            parse "\\x = 123" `shouldParse` AST.PDef "x" (Runtime.Number 123)
+
+    describe "reference" $ do
+        let parse = MP.parse Parser.reference ""
+        it "parses" $ do
+            parse "$x" `shouldParse` "x"
 
 parseLiteralsSpec :: Spec
 parseLiteralsSpec = do
@@ -91,6 +104,8 @@ parseArgs = do
             parse "[path = ~/home/path.png]" `shouldParse` M.fromList [("path", Runtime.Filepath "~/home/path.png")]
         it "parses toggles (keys without vaules)" $ do
             parse "[bold]" `shouldParse` M.fromList [("bold", Runtime.Toggle)]
+        it "parses references" $ do
+            parse "[delay=$d]" `shouldParse` M.fromList [("delay", Runtime.Reference "d")]
 
         it "parses multiple args" $ do
             parse "[x=1/3;y=2]"
@@ -172,27 +187,29 @@ parsePresentation = do
     describe "presentation" $ do
         let parse = MP.parse Parser.presentation ""
         it "parses a single literal" $ do
-            parse "some text" `shouldParse` AST.Presentation [AST.Literal "some text"]
+            parse "some text" `shouldParse` AST.Presentation [AST.PExpr $ AST.Literal "some text"]
         it "parses a single call" $ do
-            parse ".clear" `shouldParse` AST.Presentation [AST.Call "clear" M.empty []]
+            parse ".clear" `shouldParse` AST.Presentation [AST.PExpr $ AST.Call "clear" M.empty []]
+        it "parses a single definition" $ do
+            parse "\\delay = 1s" `shouldParse` AST.Presentation [AST.PDef "delay" (Runtime.Duration $ Runtime.Seconds 1)]
 
         it "ignores tailing lines" $ do
-            parse "some text\n" `shouldParse` AST.Presentation [AST.Literal "some text"]
-            parse "some text\n\n" `shouldParse` AST.Presentation [AST.Literal "some text"]
+            parse "some text\n" `shouldParse` AST.Presentation [AST.PExpr $ AST.Literal "some text"]
+            parse "some text\n\n" `shouldParse` AST.Presentation [AST.PExpr $ AST.Literal "some text"]
 
         it "parses expressions separated by <" $ do
             parse ".nl < .nl < some text"
                 `shouldParse` AST.Presentation
-                    [ AST.Newline
-                    , AST.Newline
-                    , AST.Literal "some text"
+                    [ AST.PExpr AST.Newline
+                    , AST.PExpr AST.Newline
+                    , AST.PExpr $ AST.Literal "some text"
                     ]
 
         it "parses quoted literals separated by <" $ do
             parse [r|"some text" < .nl|]
                 `shouldParse` AST.Presentation
-                    [ AST.Literal "some text"
-                    , AST.Newline
+                    [ AST.PExpr $ AST.Literal "some text"
+                    , AST.PExpr AST.Newline
                     ]
 
         it "parses expressions over multiple lines" $ do
@@ -206,25 +223,28 @@ parsePresentation = do
                 .nl
                 """
                 `shouldParse` AST.Presentation
-                    [ AST.Call "clear" M.empty []
-                    , AST.Call "vcenter" M.empty []
-                    , AST.Call
-                        "color"
-                        (M.fromList [("name", Runtime.Literal "blue")])
-                        [ AST.Literal "heading"
-                        ]
-                    , AST.Newline
-                    , AST.Literal "some text"
-                    , AST.Newline
+                    [ AST.PExpr $ AST.Call "clear" M.empty []
+                    , AST.PExpr $ AST.Call "vcenter" M.empty []
+                    , AST.PExpr $
+                        AST.Call
+                            "color"
+                            (M.fromList [("name", Runtime.Literal "blue")])
+                            [ AST.Literal "heading"
+                            ]
+                    , AST.PExpr AST.Newline
+                    , AST.PExpr $ AST.Literal "some text"
+                    , AST.PExpr AST.Newline
                     ]
 
         it "parses a sample presentation" $ do
             parse
                 [r|
+\delay = 1s
+
 .slide
   .vcenter
     .center << .bold < .type << A presentation
-    .pause [delay=1s]
+    .pause [delay=$delay]
     .nl < .nl
     .center << .type << By a person
 
@@ -233,31 +253,34 @@ parsePresentation = do
     end of presentation
 |]
                 `shouldParse` AST.Presentation
-                    [ AST.Call
-                        "slide"
-                        M.empty
-                        [ AST.Call
-                            "vcenter"
+                    [ AST.PDef "delay" (Runtime.Duration $ Runtime.Seconds 1)
+                    , AST.PExpr $
+                        AST.Call
+                            "slide"
                             M.empty
                             [ AST.Call
-                                "center"
+                                "vcenter"
                                 M.empty
-                                [ AST.Call "bold" M.empty []
-                                , AST.Call "type" M.empty [AST.Literal "A presentation"]
+                                [ AST.Call
+                                    "center"
+                                    M.empty
+                                    [ AST.Call "bold" M.empty []
+                                    , AST.Call "type" M.empty [AST.Literal "A presentation"]
+                                    ]
+                                , AST.Call "pause" (M.fromList [("delay", Runtime.Reference "delay")]) []
+                                , AST.Newline
+                                , AST.Newline
+                                , AST.Call
+                                    "center"
+                                    M.empty
+                                    [AST.Call "type" M.empty [AST.Literal "By a person"]]
                                 ]
-                            , AST.Call "pause" (M.fromList [("delay", Runtime.Duration (Runtime.Seconds 1))]) []
-                            , AST.Newline
-                            , AST.Newline
-                            , AST.Call
-                                "center"
-                                M.empty
-                                [AST.Call "type" M.empty [AST.Literal "By a person"]]
                             ]
-                        ]
-                    , AST.Call
-                        "slide"
-                        M.empty
-                        [ AST.Call "vcenter" M.empty []
-                        , AST.Literal "end of presentation"
-                        ]
+                    , AST.PExpr $
+                        AST.Call
+                            "slide"
+                            M.empty
+                            [ AST.Call "vcenter" M.empty []
+                            , AST.Literal "end of presentation"
+                            ]
                     ]
