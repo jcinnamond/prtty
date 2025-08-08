@@ -4,7 +4,6 @@ import Compiler.Compiler (compile)
 import Control.Monad.Except (ExceptT, MonadError (throwError), runExceptT)
 import Control.Monad.IO.Class (MonadIO (..))
 import Data.Text (Text)
-import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector)
 import Options (Options (..), options)
@@ -53,6 +52,6 @@ debug x = do
     liftIO $ TIO.putStrLn $ pretty x
     pure empty
 
-handlingError :: (Show e) => Either e b -> (b -> App b) -> App b
-handlingError (Left err) _ = throwError $ T.show err
+handlingError :: Either Text b -> (b -> App b) -> App b
+handlingError (Left err) _ = throwError err
 handlingError (Right x) f = f x
