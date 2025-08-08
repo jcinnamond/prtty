@@ -40,7 +40,35 @@ compileBuiltin "image" = compileImage
 compileBuiltin "quote" = compileQuote
 compileBuiltin "list" = compileList
 compileBuiltin "backspace" = compileBackspace
+compileBuiltin "alternate" = compileAlternate
 compileBuiltin x = unrecognised x
+
+compileAlternate :: AST.Args -> [AST.Expr] -> Compiler
+compileAlternate args body = do
+    literals <- getLiterals body
+    compileExpressions $ interleave (toType literals) (toDelete $ take (length literals - 1) literals)
+  where
+    getLiterals :: [AST.Expr] -> Either Text [Text]
+    getLiterals [] = pure []
+    getLiterals (AST.Literal t : rest) = (t :) <$> getLiterals rest
+    getLiterals e = Left $ "cannot use " <> T.show e <> " as an alternate"
+
+    toType :: [Text] -> [AST.Expr]
+    toType = map (\t -> AST.Call "type" delay [AST.Literal t])
+
+    toDelete :: [Text] -> [AST.Expr]
+    toDelete = map (\t -> AST.Call "backspace" (M.insert "count" (Runtime.Number $ T.length t) delay) [])
+
+    interleave :: [AST.Expr] -> [AST.Expr] -> [AST.Expr]
+    interleave (x : xs) (y : ys) = x : AST.Call "wait" M.empty [] : y : interleave xs ys
+    interleave [] [] = []
+    interleave xs [] = xs
+    interleave [] ys = ys
+
+    delay :: AST.Args
+    delay = case M.lookup "delay" args of
+        Nothing -> M.empty
+        (Just v) -> M.fromList [("delay", v)]
 
 compileBackspace :: AST.Args -> [AST.Expr] -> Compiler
 compileBackspace args body = case M.lookup "count" args of

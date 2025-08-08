@@ -357,6 +357,89 @@ spec = do
                                   , Runtime.Pause $ Runtime.Milliseconds 2
                                   ]
 
+    describe "'alternate'" $ do
+        it "types, waits, and then deletes literals" $
+            AST.Call
+                "alternate"
+                M.empty
+                [ AST.Literal "first"
+                , AST.Literal "second"
+                ]
+                `shouldCompileTo` [ Runtime.Output "f"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "i"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "r"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "s"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "t"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.WaitForInput
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "s"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "c"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "o"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "n"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  , Runtime.Output "d"
+                                  , Runtime.Pause $ Runtime.Milliseconds 50
+                                  ]
+
+        it "allows the delay to be overridden" $
+            AST.Call
+                "alternate"
+                (M.fromList [("delay", Runtime.Duration $ Runtime.Milliseconds 2)])
+                [AST.Literal "first", AST.Literal "second"]
+                `shouldCompileTo` [ Runtime.Output "f"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "i"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "r"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "s"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "t"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.WaitForInput
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "s"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "e"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "c"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "o"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "n"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  , Runtime.Output "d"
+                                  , Runtime.Pause $ Runtime.Milliseconds 2
+                                  ]
+
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle
 
