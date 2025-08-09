@@ -275,7 +275,7 @@ compileStyle args body = do
             pure $ V.fromList [Runtime.SaveStyle, Runtime.SetStyle style] <> rest <> V.singleton Runtime.RestoreStyle
 
 defaultDelay :: Runtime.Duration
-defaultDelay = Runtime.Milliseconds 50
+defaultDelay = Runtime.Milliseconds 30
 
 standalone :: Text -> Vector Instruction -> AST.Args -> [AST.Expr] -> Compiler
 standalone name = withNoArgs name . withNoBody name

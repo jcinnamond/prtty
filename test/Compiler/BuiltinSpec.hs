@@ -1,6 +1,6 @@
 module Compiler.BuiltinSpec (spec) where
 
-import Compiler.Internal (compileExpression)
+import Compiler.Internal (compileExpression, defaultDelay)
 import Compiler.Internal.Types (evalCompiler)
 import Data.Map qualified as M
 import Data.Text qualified as T
@@ -13,17 +13,16 @@ import VT qualified
 
 spec :: Spec
 spec = do
-    it "compiles 'clear'" $ do
+    it "compiles 'clear'" $
         AST.Call "clear" M.empty []
             `shouldCompileExpressionTo` [ Runtime.StoreBackMarker
                                         , Runtime.Output VT.clear
                                         , Runtime.Home
                                         ]
 
-    it "compiles 'wait'" $ do
-        AST.Call "wait" M.empty [] `shouldCompileExpressionTo` [Runtime.WaitForInput]
+    it "compiles 'wait'" $ AST.Call "wait" M.empty [] `shouldCompileExpressionTo` [Runtime.WaitForInput]
 
-    it "compiles slides" $ do
+    it "compiles slides" $
         AST.Call
             "slide"
             M.empty
@@ -52,7 +51,7 @@ spec = do
             AST.Call "margin" (M.fromList [("top", Runtime.Rational 1 10)]) [] `shouldCompileExpressionTo` [Runtime.SetTopMargin $ Runtime.Rational 1 10]
             AST.Call "margin" (M.fromList [("top", Runtime.Number 5)]) [] `shouldCompileExpressionTo` [Runtime.SetTopMargin $ Runtime.Number 5]
 
-        it "combines left and top margins" $ do
+        it "combines left and top margins" $
             AST.Call
                 "margin"
                 ( M.fromList
@@ -65,30 +64,29 @@ spec = do
                                             , Runtime.SetTopMargin $ Runtime.Percentage 10
                                             ]
 
-    it "compiles 'home'" $ do
-        AST.Call "home" M.empty [] `shouldCompileExpressionTo` [Runtime.Home]
+    it "compiles 'home'" $ AST.Call "home" M.empty [] `shouldCompileExpressionTo` [Runtime.Home]
 
     describe "'moveTo'" $ do
         describe "without an anchor" $ do
-            it "uses TopLeft as the anchor" $ do
+            it "uses TopLeft as the anchor" $
                 AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5)]) []
                     `shouldCompileExpressionTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.Margin]
-            it "compiles with just x coordinates" $ do
+            it "compiles with just x coordinates" $
                 AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10)]) []
                     `shouldCompileExpressionTo` [Runtime.MoveTo Nothing (Just $ Runtime.Number 10) Runtime.Margin]
-            it "compiles with just y coordinates" $ do
+            it "compiles with just y coordinates" $
                 AST.Call "moveTo" (M.fromList [("y", Runtime.Number 5)]) []
                     `shouldCompileExpressionTo` [Runtime.MoveTo (Just $ Runtime.Number 5) Nothing Runtime.Margin]
-        describe "with an explicit top left anchor" $ do
-            it "compiles with the anchor" $ do
+        describe "with an explicit top left anchor" $
+            it "compiles with the anchor" $
                 AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("anchor", Runtime.Literal "TopLeft")]) []
                     `shouldCompileExpressionTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.TopLeft]
-        describe "with an explicit bottom right anchor" $ do
-            it "compiles with the anchor" $ do
+        describe "with an explicit bottom right anchor" $
+            it "compiles with the anchor" $
                 AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("anchor", Runtime.Literal "BottomRight")]) []
                     `shouldCompileExpressionTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.BottomRight]
-        describe "with an explicit margin anchor" $ do
-            it "compiles with the anchor" $ do
+        describe "with an explicit margin anchor" $
+            it "compiles with the anchor" $
                 AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10), ("y", Runtime.Number 5), ("anchor", Runtime.Literal "Margin")]) []
                     `shouldCompileExpressionTo` [Runtime.MoveTo (Just $ Runtime.Number 5) (Just $ Runtime.Number 10) Runtime.Margin]
 
@@ -103,15 +101,15 @@ spec = do
         AST.Call "center" M.empty [AST.Call "type" M.empty [AST.Literal "hello"]]
             `shouldCompileExpressionTo` [ Runtime.Center 5
                                         , Runtime.Output "h"
-                                        , Runtime.Pause (Runtime.Milliseconds 50)
+                                        , Runtime.Pause defaultDelay
                                         , Runtime.Output "e"
-                                        , Runtime.Pause (Runtime.Milliseconds 50)
+                                        , Runtime.Pause defaultDelay
                                         , Runtime.Output "l"
-                                        , Runtime.Pause (Runtime.Milliseconds 50)
+                                        , Runtime.Pause defaultDelay
                                         , Runtime.Output "l"
-                                        , Runtime.Pause (Runtime.Milliseconds 50)
+                                        , Runtime.Pause defaultDelay
                                         , Runtime.Output "o"
-                                        , Runtime.Pause (Runtime.Milliseconds 50)
+                                        , Runtime.Pause defaultDelay
                                         ]
 
     it "compiles 'vcenter'" $ do
@@ -149,64 +147,64 @@ spec = do
         AST.Call "vspace" (M.fromList [("lines", Runtime.Number 5)]) [] `shouldCompileExpressionTo` [Runtime.VSpace 5]
 
     describe "'type'" $ do
-        it "compiles with a default pause time" $ do
+        it "compiles with a default pause time" $
             AST.Call "type" M.empty [AST.Literal "hi there"]
                 `shouldCompileExpressionTo` [ Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "i"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output " "
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "t"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "r"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             ]
 
-        it "types multiple literals" $ do
+        it "types multiple literals" $
             AST.Call "type" M.empty [AST.Literal "hi", AST.Literal "there"]
                 `shouldCompileExpressionTo` [ Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "i"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "t"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "r"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             ]
 
-        it "passes through non-literal expressions" $ do
+        it "passes through non-literal expressions" $
             AST.Call "type" M.empty [AST.Literal "hi", AST.Call "wait" M.empty [], AST.Literal "there"]
                 `shouldCompileExpressionTo` [ Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "i"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.WaitForInput
                                             , Runtime.Output "t"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "r"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             ]
 
-        it "pushes the type down to embedded literals" $ do
+        it "pushes the type down to embedded literals" $
             AST.Call
                 "type"
                 M.empty
@@ -219,31 +217,31 @@ spec = do
                 , AST.Literal "there"
                 ]
                 `shouldCompileExpressionTo` [ Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.SaveStyle
                                             , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 0 0 0})
                                             , Runtime.Output "l"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "l"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "o"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.RestoreStyle
                                             , Runtime.Output "t"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "r"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             ]
 
-        it "compiles with a custom delay" $ do
+        it "compiles with a custom delay" $
             AST.Call "type" (M.fromList [("delay", Runtime.Duration (Runtime.Seconds 1))]) [AST.Literal "hi"]
                 `shouldCompileExpressionTo` [ Runtime.Output "h"
                                             , Runtime.Pause (Runtime.Seconds 1)
@@ -251,23 +249,23 @@ spec = do
                                             , Runtime.Pause (Runtime.Seconds 1)
                                             ]
 
-        it "types multiple literal lines" $ do
+        it "types multiple literal lines" $
             AST.Call "type" M.empty [AST.LiteralLine "hi", AST.LiteralLine "there"]
                 `shouldCompileExpressionTo` [ Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "i"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Newline
                                             , Runtime.Output "t"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "h"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "r"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause (Runtime.Milliseconds 50)
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Newline
                                             ]
 
@@ -282,8 +280,8 @@ spec = do
             it "sets bg color" $
                 AST.Call "style" (M.fromList [("bg", Runtime.RGB 77 77 77)]) []
                     `shouldCompileExpressionTo` [Runtime.SetStyle (nostyle{Runtime.bgColor = Just $ Runtime.RGB 77 77 77})]
-        describe "with a block" $ do
-            it "temporarily sets the styles" $ do
+        describe "with a block" $
+            it "temporarily sets the styles" $
                 AST.Call
                     "style"
                     (M.fromList [("bold", Runtime.Toggle)])
@@ -295,7 +293,7 @@ spec = do
                                                 , Runtime.RestoreStyle
                                                 ]
 
-    describe "'img'" $ do
+    describe "'img'" $
         it "generates an instruction to show the image" $
             AST.Call "image" (M.fromList [("path", Runtime.Filepath "path.png")]) []
                 `shouldCompileExpressionTo` [Runtime.Exec $ "kitten icat --align center " <> "path.png"]
@@ -318,7 +316,7 @@ spec = do
                                             ]
 
     describe "'quote'" $ do
-        it "compiles quotes without an author" $ do
+        it "compiles quotes without an author" $
             AST.Call "quote" M.empty [AST.Literal "a quote"]
                 `shouldCompileExpressionTo` [ Runtime.Center 9
                                             , Runtime.Output "“"
@@ -386,22 +384,22 @@ spec = do
                                             ]
 
     describe "'backspace'" $ do
-        it "deletes characters backwards, pausing between" $ do
+        it "deletes characters backwards, pausing between" $
             AST.Call "backspace" (M.fromList [("count", Runtime.Number 3)]) []
                 `shouldCompileExpressionTo` [ Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             ]
 
-        it "deletes the length of a given literal" $ do
+        it "deletes the length of a given literal" $
             AST.Call "backspace" M.empty [AST.Literal "hi"]
                 `shouldCompileExpressionTo` [ Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             ]
 
         it "allows the pause time to be overridden" $ do
@@ -435,38 +433,38 @@ spec = do
                 , AST.Literal "second"
                 ]
                 `shouldCompileExpressionTo` [ Runtime.Output "f"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "i"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "r"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "s"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "t"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.WaitForInput
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output $ VT.moveLeft 1 <> " " <> VT.moveLeft 1
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "s"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "e"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "c"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "o"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "n"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             , Runtime.Output "d"
-                                            , Runtime.Pause $ Runtime.Milliseconds 50
+                                            , Runtime.Pause defaultDelay
                                             ]
 
         it "allows the delay to be overridden" $
