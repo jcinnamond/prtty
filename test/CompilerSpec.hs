@@ -2,13 +2,14 @@ module CompilerSpec (spec) where
 
 import Compiler.Compiler (compile)
 import Compiler.Internal (compileExpression)
+import Compiler.Internal.Types (evalCompiler)
 import Data.Either (isLeft)
 import Data.Map qualified as M
 import Data.Vector qualified as V
 import Parser.AST qualified as AST
 import Runtime.Instructions qualified as Runtime
 import Runtime.Value qualified as Runtime
-import Test.Hspec (Expectation, Spec, it, shouldBe)
+import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
 import VT qualified
 
 spec :: Spec
@@ -16,6 +17,8 @@ spec = do
     compileLiteralSpec
     compileNewlineSpec
     compileSpec
+    compilePreludeSpec
+    compileJumpSpec
 
 compileLiteralSpec :: Spec
 compileLiteralSpec = do
@@ -93,5 +96,105 @@ compileSpec = do
         let result = compile [AST.Presentation [AST.PExpr $ AST.Call "unknown" M.empty []]]
         isLeft result `shouldBe` True
 
+compilePreludeSpec :: Spec
+compilePreludeSpec = do
+    describe "prelude" $ do
+        it "is inserted at the start of the presentation" $
+            do
+                compile
+                    [ AST.Presentation
+                        [AST.PExpr $ AST.Literal "Hi"]
+                    , AST.Presentation
+                        [ AST.PExpr $
+                            AST.Call
+                                "prelude"
+                                M.empty
+                                [ AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []
+                                ]
+                        , AST.PExpr $ AST.Literal "Bye"
+                        ]
+                    ]
+                `shouldBe` Right
+                    ( V.fromList
+                        [ Runtime.SetLeftMargin $ Runtime.Number 10
+                        , Runtime.Output "Hi"
+                        , Runtime.Output "Bye"
+                        ]
+                    )
+
+        it "combines multiple preludes" $
+            do
+                compile
+                    [ AST.Presentation
+                        [ AST.PExpr $ AST.Literal "Hi"
+                        , AST.PExpr $ AST.Call "prelude" M.empty [AST.Literal "start of presentation"]
+                        ]
+                    , AST.Presentation
+                        [ AST.PExpr $
+                            AST.Call
+                                "prelude"
+                                M.empty
+                                [ AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []
+                                ]
+                        , AST.PExpr $ AST.Literal "Bye"
+                        ]
+                    ]
+                `shouldBe` Right
+                    ( V.fromList
+                        [ Runtime.Output "start of presentation"
+                        , Runtime.SetLeftMargin $ Runtime.Number 10
+                        , Runtime.Output "Hi"
+                        , Runtime.Output "Bye"
+                        ]
+                    )
+
+compileJumpSpec :: Spec
+compileJumpSpec = do
+    describe "jump to start" $ do
+        it "inserts a jump instruction" $
+            do
+                compile
+                    [ AST.Presentation [AST.PExpr $ AST.Literal "Hi"]
+                    , AST.Presentation
+                        [ AST.PExpr $ AST.Call "startHere" M.empty []
+                        , AST.PExpr $ AST.Literal "Bye"
+                        ]
+                    ]
+                `shouldBe` Right
+                    ( V.fromList
+                        [ Runtime.JumpTo 2
+                        , Runtime.Output "Hi"
+                        , Runtime.SetMarker "startHere"
+                        , Runtime.Output "Bye"
+                        ]
+                    )
+
+        it "doesn't jump until after the prelude" $
+            do
+                compile
+                    [ AST.Presentation
+                        [ AST.PExpr $
+                            AST.Call
+                                "prelude"
+                                M.empty
+                                [ AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []
+                                ]
+                        , AST.PExpr $ AST.Literal "Hi"
+                        ]
+                    , AST.Presentation
+                        [ AST.PExpr $ AST.Call "startHere" M.empty []
+                        , AST.PExpr $ AST.Literal "Bye"
+                        ]
+                    ]
+                `shouldBe` Right
+                    ( V.fromList
+                        [ Runtime.SetLeftMargin $ Runtime.Number 10
+                        , Runtime.JumpTo 3
+                        , Runtime.Output "Hi"
+                        , Runtime.SetMarker "startHere"
+                        , Runtime.Output "Bye"
+                        ]
+                    )
+
 shouldCompileTo :: AST.Expr -> [Runtime.Instruction] -> Expectation
-shouldCompileTo expr is = compileExpression expr `shouldBe` Right (V.fromList is)
+shouldCompileTo expr is = evalCompiler (compileExpression expr) `shouldBe` Right (V.fromList is)

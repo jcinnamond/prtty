@@ -1,5 +1,7 @@
 module Compiler.Internal.Rewrite where
 
+import Compiler.Internal.Types (Compiler')
+import Control.Monad.Error.Class (MonadError (..))
 import Data.List qualified as L
 import Data.Map (Map)
 import Data.Map qualified as M
@@ -8,7 +10,7 @@ import Data.Text qualified as T
 import Parser.AST qualified as AST
 import Runtime.Value qualified as Value
 
-type Rewrite = Either Text [AST.Expr]
+type Rewrite = Compiler' [AST.Expr]
 type RewriteFn = AST.Args -> [AST.Expr] -> Rewrite
 
 rewrite :: [AST.Expr] -> Rewrite
@@ -63,7 +65,7 @@ withNoArgs name f args
     | M.null args = f
     | otherwise =
         const $
-            Left $
+            throwError $
                 "unexpected args when calling '"
                     <> name
                     <> "': "

@@ -1,5 +1,7 @@
 module Compiler.Internal where
 
+import Compiler.Internal.Types (Compiler, Compiler', setPrelude)
+import Control.Monad.Except (MonadError (throwError))
 import Data.Map qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -11,8 +13,6 @@ import Runtime.Instructions qualified as Runtime
 import Runtime.Value (Value)
 import Runtime.Value qualified as Runtime
 import VT qualified
-
-type Compiler = Either Text (Vector Instruction)
 
 compileExpressions :: [AST.Expr] -> Compiler
 compileExpressions exprs = V.concat <$> traverse compileExpression exprs
@@ -41,17 +41,27 @@ compileBuiltin "image" = compileImage
 compileBuiltin "quote" = compileQuote
 compileBuiltin "backspace" = compileBackspace
 compileBuiltin "alternate" = compileAlternate
+compileBuiltin "startHere" = standalone "startHere" compileStartHere
+compileBuiltin "prelude" = withNoArgs "prelude" compilePrelude
 compileBuiltin x = unrecognised x
+
+compilePrelude :: [AST.Expr] -> Compiler
+compilePrelude body = do
+    compileExpressions body >>= setPrelude
+    pure V.empty
+
+compileStartHere :: Vector Instruction
+compileStartHere = V.singleton $ Runtime.SetMarker "startHere"
 
 compileAlternate :: AST.Args -> [AST.Expr] -> Compiler
 compileAlternate args body = do
     literals <- getLiterals body
     compileExpressions $ interleave (toType literals) (toDelete $ take (length literals - 1) literals)
   where
-    getLiterals :: [AST.Expr] -> Either Text [Text]
+    getLiterals :: [AST.Expr] -> Compiler' [Text]
     getLiterals [] = pure []
     getLiterals (AST.Literal t : rest) = (t :) <$> getLiterals rest
-    getLiterals e = Left $ "cannot use " <> T.show e <> " as an alternate"
+    getLiterals e = throwError $ "cannot use " <> T.show e <> " as an alternate"
 
     toType :: [Text] -> [AST.Expr]
     toType = map (\t -> AST.Call "type" delay [AST.Literal t])
@@ -74,7 +84,7 @@ compileBackspace :: AST.Args -> [AST.Expr] -> Compiler
 compileBackspace args body = case M.lookup "count" args of
     Nothing -> pure $ backspace $ width body
     (Just (Runtime.Number c)) -> pure $ backspace c
-    x -> Left $ "invalid count given to backspace " <> T.show x
+    x -> throwError $ "invalid count given to backspace " <> T.show x
   where
     backspace :: Int -> Vector Instruction
     backspace 0 = V.empty
@@ -107,7 +117,7 @@ compileQuote args body = case M.lookup "citation" args of
                     , Runtime.Center $ width body + 2
                     ]
                 <> styledCitation
-    _ -> Left "invalid citation"
+    _ -> throwError "invalid citation"
   where
     style :: Text -> [AST.Expr]
     style t = case altColor of
@@ -124,28 +134,28 @@ compileMoveTo args body = do
         y = M.lookup "y" args
     withNoBody "moveTo" (V.singleton $ Runtime.MoveTo y x anchor) body
   where
-    getAnchor :: Either Text Runtime.Anchor
+    getAnchor :: Compiler' Runtime.Anchor
     getAnchor = case M.lookup "anchor" args of
         (Just (Runtime.Literal "BottomRight")) -> pure Runtime.BottomRight
         (Just (Runtime.Literal "Margin")) -> pure Runtime.Margin
         (Just (Runtime.Literal "TopLeft")) -> pure Runtime.TopLeft
         Nothing -> pure Runtime.Margin
-        v -> Left $ "unrecognised anchor: " <> T.show v
+        v -> throwError $ "unrecognised anchor: " <> T.show v
 
 compileExec :: AST.Args -> [AST.Expr] -> Compiler
 compileExec args body = case M.lookup "cmd" args of
-    Nothing -> Left "missing cmd"
+    Nothing -> throwError "missing cmd"
     (Just (Runtime.Literal cmd)) -> withNoBody "exec" (V.singleton (Runtime.Exec cmd) <> maybeReset) body
-    _ -> Left "malformed exec instruction"
+    _ -> throwError "malformed exec instruction"
   where
     maybeReset :: Vector Instruction
     maybeReset = maybe V.empty (const $ V.singleton Runtime.Reset) (M.lookup "interactive" args)
 
 compileImage :: AST.Args -> [AST.Expr] -> Compiler
 compileImage args body = case M.lookup "path" args of
-    Nothing -> Left "missing image path"
+    Nothing -> throwError "missing image path"
     (Just (Runtime.Filepath path)) -> withNoBody "image" (image path) body
-    _ -> Left "malformed image instruction"
+    _ -> throwError "malformed image instruction"
   where
     image :: Text -> Vector Instruction
     image path = V.singleton $ Runtime.Exec $ "kitten icat --align center " <> path
@@ -180,7 +190,7 @@ compileType args (AST.Literal t : body) = do
     getPause = case M.lookup "delay" args of
         Nothing -> pure $ V.singleton $ Runtime.Pause defaultDelay
         (Just (Runtime.Duration x)) -> pure $ V.singleton $ Runtime.Pause x
-        _ -> Left "'type' only accepts a duration argument"
+        _ -> throwError "'type' only accepts a duration argument"
 compileType args (AST.LiteralLine t : body) = do
     typeLiteral <- compileType args [AST.Literal t]
     rest <- compileType args body
@@ -237,7 +247,7 @@ compileMargin args [] = do
     top <- margin "top" Runtime.SetTopMargin
     let combined = left <> top
     if V.null combined
-        then Left "no margins provided"
+        then throwError "no margins provided"
         else pure combined
   where
     margin :: Text -> (Value -> Instruction) -> Compiler
@@ -246,8 +256,8 @@ compileMargin args [] = do
         Just (Runtime.Number x) -> pure $ V.singleton $ f $ Runtime.Number x
         Just (Runtime.Percentage x) -> pure $ V.singleton $ f $ Runtime.Percentage x
         Just (Runtime.Rational n d) -> pure $ V.singleton $ f $ Runtime.Rational n d
-        Just v -> Left $ "unsupported left margin type: " <> T.show v
-compileMargin _ body = Left $ "'margin' does not take a body but got: " <> T.show body
+        Just v -> throwError $ "unsupported left margin type: " <> T.show v
+compileMargin _ body = throwError $ "'margin' does not take a body but got: " <> T.show body
 
 compileStyle :: AST.Args -> [AST.Expr] -> Compiler
 compileStyle args body = do
@@ -273,15 +283,15 @@ standalone name = withNoArgs name . withNoBody name
 withNoArgs :: Text -> ([AST.Expr] -> Compiler) -> AST.Args -> ([AST.Expr] -> Compiler)
 withNoArgs name f args
     | M.null args = f
-    | otherwise = const $ Left $ "unexpected args when calling '" <> name <> "': " <> T.show args
+    | otherwise = const $ throwError $ "unexpected args when calling '" <> name <> "': " <> T.show args
 
 withNoBody :: Text -> Vector Instruction -> [AST.Expr] -> Compiler
 withNoBody _ f [] = pure f
-withNoBody name _ body = Left $ "unexpected body when calling '" <> name <> "': " <> T.show body
+withNoBody name _ body = throwError $ "unexpected body when calling '" <> name <> "': " <> T.show body
 
 compileWithBody :: Instruction -> [AST.Expr] -> Compiler
 compileWithBody i [] = pure $ V.singleton i
 compileWithBody i body = V.cons i <$> compileExpressions body
 
 unrecognised :: Text -> AST.Args -> [AST.Expr] -> Compiler
-unrecognised name args body = Left $ "unrecognised '" <> name <> "': " <> T.show args <> " {" <> T.show body <> "}"
+unrecognised name args body = throwError $ "unrecognised '" <> name <> "': " <> T.show args <> " {" <> T.show body <> "}"

@@ -1,5 +1,7 @@
 module Compiler.Internal.References where
 
+import Compiler.Internal.Types (Compiler')
+import Control.Monad.Error.Class (MonadError (..))
 import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Text (Text)
@@ -9,24 +11,24 @@ import Runtime.Value (Value (..))
 type Definitions = Map Text Value
 type Partition = (Definitions, [AST.Expr])
 
-resolveReferences :: [AST.Presentation] -> Either Text [AST.Expr]
+resolveReferences :: [AST.Presentation] -> Compiler' [AST.Expr]
 resolveReferences ps =
     let (definitions, exprs) = partition ps
      in traverse (go definitions) exprs
   where
-    go :: Definitions -> AST.Expr -> Either Text AST.Expr
+    go :: Definitions -> AST.Expr -> Compiler' AST.Expr
     go definitions (AST.Call name args body) = do
         args' <- resolve definitions args
         body' <- traverse (go definitions) body
         pure $ AST.Call name args' body'
     go _ e = pure e
 
-resolve :: Definitions -> AST.Args -> Either Text AST.Args
+resolve :: Definitions -> AST.Args -> Compiler' AST.Args
 resolve definitions = traverse resolve'
   where
-    resolve' :: Value -> Either Text Value
+    resolve' :: Value -> Compiler' Value
     resolve' (Reference x) = case M.lookup x definitions of
-        Nothing -> Left $ "unresolved reference $" <> x
+        Nothing -> throwError $ "unresolved reference $" <> x
         Just v -> pure v
     resolve' v = pure v
 

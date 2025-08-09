@@ -100,6 +100,8 @@ run' e = do
             run' e'
 
 runInstruction :: Instruction -> Runtime
+runInstruction (SetMarker _) = pure ()
+runInstruction (JumpTo i) = runJump i
 runInstruction (Output t) = out t
 runInstruction Newline = out "\n" >> moveToLeftMargin
 runInstruction StoreBackMarker = modify storeBackMarker
@@ -117,6 +119,9 @@ runInstruction SaveStyle = modify storeCurrentStyle
 runInstruction RestoreStyle = runRestoreStyles
 runInstruction (Exec cmd) = liftIO $ Cmd.run $ TE.encodeUtf8 cmd
 runInstruction Reset = runReset
+
+runJump :: Int -> Runtime
+runJump i = modify (\e -> e{pc = i})
 
 runMoveTo :: Maybe Value -> Maybe Value -> Anchor -> Runtime
 runMoveTo (Just y) Nothing anchor = moveToY y anchor

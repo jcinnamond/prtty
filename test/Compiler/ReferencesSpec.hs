@@ -1,5 +1,6 @@
 module Compiler.ReferencesSpec (spec) where
 
+import Compiler.Helpers (shouldCompileTo, shouldThrowError)
 import Compiler.Internal.References (extractDefinitions, extractExprs, partition, resolve, resolveReferences)
 import Data.Map qualified as M
 import Parser.AST qualified as AST
@@ -64,32 +65,29 @@ spec = do
                     , ("padding", Runtime.Number 10)
                     ]
 
-        it "replaces references with their definitions" $
-            do
-                resolve definitions M.empty `shouldBe` Right M.empty
+        it "replaces references with their definitions" $ do
+            resolve definitions M.empty `shouldCompileTo` M.empty
 
-                resolve definitions (M.fromList [("delay", Runtime.Reference "delay")])
-                    `shouldBe` Right (M.fromList [("delay", Runtime.Duration $ Runtime.Milliseconds 50)])
+            resolve definitions (M.fromList [("delay", Runtime.Reference "delay")])
+                `shouldCompileTo` M.fromList [("delay", Runtime.Duration $ Runtime.Milliseconds 50)]
 
-                resolve
-                    definitions
-                    ( M.fromList
-                        [ ("x", Runtime.Reference "padding")
-                        , ("y", Runtime.Reference "padding")
-                        , ("anchor", Runtime.Literal "topLeft")
-                        ]
-                    )
-                    `shouldBe` Right
-                        ( M.fromList
-                            [ ("x", Runtime.Number 10)
-                            , ("y", Runtime.Number 10)
-                            , ("anchor", Runtime.Literal "topLeft")
-                            ]
-                        )
+            resolve
+                definitions
+                ( M.fromList
+                    [ ("x", Runtime.Reference "padding")
+                    , ("y", Runtime.Reference "padding")
+                    , ("anchor", Runtime.Literal "topLeft")
+                    ]
+                )
+                `shouldCompileTo` M.fromList
+                    [ ("x", Runtime.Number 10)
+                    , ("y", Runtime.Number 10)
+                    , ("anchor", Runtime.Literal "topLeft")
+                    ]
 
         it "returns an error if the definition can't be found" $ do
             resolve definitions (M.fromList [("x", Runtime.Reference "xpos")])
-                `shouldBe` Left "unresolved reference $xpos"
+                `shouldThrowError` "unresolved reference $xpos"
 
     describe "resolveReferences" $ do
         it "replaces references with their definition" $ do
@@ -113,15 +111,14 @@ spec = do
                     , AST.PExpr $ AST.Call "moveTo" (M.fromList [("x", Runtime.Reference "margin")]) []
                     ]
                 ]
-                `shouldBe` Right
-                    [ AST.Call "clear" M.empty []
-                    , AST.Call
-                        "center"
-                        M.empty
-                        [ AST.Call "style" (M.fromList [("fg", Runtime.RGB 255 127 220)]) [AST.Literal "hi"]
-                        ]
-                    , AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10)]) []
-                    ]
+                `shouldCompileTo` [ AST.Call "clear" M.empty []
+                                  , AST.Call
+                                        "center"
+                                        M.empty
+                                        [ AST.Call "style" (M.fromList [("fg", Runtime.RGB 255 127 220)]) [AST.Literal "hi"]
+                                        ]
+                                  , AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10)]) []
+                                  ]
 
         it "returns an error if a reference can't be found" $
             do
@@ -137,4 +134,4 @@ spec = do
                                 []
                         ]
                     ]
-                `shouldBe` Left "unresolved reference $padding"
+                `shouldThrowError` "unresolved reference $padding"

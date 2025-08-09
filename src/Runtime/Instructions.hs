@@ -29,6 +29,8 @@ data Instruction
     | RestoreStyle
     | Exec Text
     | Reset
+    | JumpTo Int
+    | SetMarker Text
     deriving stock (Show, Eq)
 
 data Anchor = TopLeft | BottomRight | Margin

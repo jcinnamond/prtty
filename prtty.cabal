@@ -13,6 +13,7 @@ common shared
     base ^>=4.21.0.0,
     bytestring ^>=0.12.1.0,
     containers ^>=0.7,
+    mtl ^>=2.3.1,
     text ^>=2.1.1,
     vector ^>=0.13.2.0,
 
@@ -38,6 +39,7 @@ library
     Compiler.Internal
     Compiler.Internal.References
     Compiler.Internal.Rewrite
+    Compiler.Internal.Types
     Options
     Parser.AST
     Parser.Internal
@@ -50,7 +52,6 @@ library
 
   build-depends:
     megaparsec ^>=9.7.0,
-    mtl ^>=2.3.1,
     optparse-applicative ^>=0.19.0.0,
     terminal-size ^>=0.3.4,
     unix ^>=2.8.7.0,
@@ -61,7 +62,6 @@ executable prtty-app
   hs-source-dirs: app
   ghc-options: -threaded
   build-depends:
-    mtl ^>=2.3.1,
     optparse-applicative ^>=0.19.0.0,
     prtty,
     unix ^>=2.8.7.0,
@@ -74,6 +74,7 @@ test-suite prtty-test
   build-tool-depends: hspec-discover:hspec-discover >=2 && <3
   other-modules:
     Compiler.BuiltinSpec
+    Compiler.Helpers
     Compiler.ReferencesSpec
     Compiler.RewriteSpec
     CompilerSpec
