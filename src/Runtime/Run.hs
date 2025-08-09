@@ -206,8 +206,17 @@ runWaitForInput :: Runtime
 runWaitForInput = do
     c <- liftIO getChar
     case c of
+        '\ESC' -> do
+            c' <- liftIO getChar
+            c'' <- liftIO getChar
+            c''' <- liftIO getChar
+            if [c', c'', c''']
+                == "[5~"
+                then runMoveBack
+                else nochange
         'b' -> runMoveBack
         'q' -> modify stop
+        '.' -> modify stop
         _ -> nochange
 
 runHome :: Runtime
