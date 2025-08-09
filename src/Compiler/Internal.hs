@@ -19,7 +19,7 @@ compileExpressions exprs = V.concat <$> traverse compileExpression exprs
 
 compileExpression :: AST.Expr -> Compiler
 compileExpression (AST.Literal t) = pure $ V.singleton $ Runtime.Output t
-compileExpression (AST.LiteralLine t) = pure $ V.fromList [Runtime.Output t, Runtime.Newline]
+compileExpression (AST.LiteralLine _) = error "this should have been rewritten"
 compileExpression AST.Newline = pure $ V.singleton Runtime.Newline
 compileExpression (AST.Call name args body) = compileBuiltin name args body
 

@@ -37,6 +37,7 @@ library
     Compiler.Compiler
     Compiler.Internal
     Compiler.Internal.References
+    Compiler.Internal.Rewrite
     Options
     Parser.AST
     Parser.Internal
@@ -74,6 +75,7 @@ test-suite prtty-test
   other-modules:
     Compiler.BuiltinSpec
     Compiler.ReferencesSpec
+    Compiler.RewriteSpec
     CompilerSpec
     ParserSpec
 

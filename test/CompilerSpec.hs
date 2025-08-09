@@ -21,8 +21,6 @@ compileLiteralSpec :: Spec
 compileLiteralSpec = do
     it "outputs the literal" $ do
         AST.Literal "some text" `shouldCompileTo` [Runtime.Output "some text"]
-    it "outputs text followed by a newline for a LiteralLine" $ do
-        AST.LiteralLine "some text" `shouldCompileTo` [Runtime.Output "some text", Runtime.Newline]
 
 compileNewlineSpec :: Spec
 compileNewlineSpec = do
@@ -65,6 +63,29 @@ compileSpec = do
                         Nothing
                         (Just $ Runtime.Number 10)
                         Runtime.Margin
+                    ]
+                )
+
+    it "reduces expressions" $
+        compile
+            [ AST.Presentation
+                [ AST.PExpr $
+                    AST.Call
+                        "slide"
+                        M.empty
+                        [ AST.Call "middle" M.empty [AST.Literal "hello"]
+                        ]
+                ]
+            ]
+            `shouldBe` Right
+                ( V.fromList
+                    [ Runtime.StoreBackMarker
+                    , Runtime.Output VT.clear
+                    , Runtime.Home
+                    , Runtime.VCenter 0
+                    , Runtime.Center 5
+                    , Runtime.Output "hello"
+                    , Runtime.WaitForInput
                     ]
                 )
 
