@@ -3,6 +3,7 @@ module Compiler.RewriteSpec (spec) where
 import Compiler.Internal.Rewrite (rewrite, rewriteExpression)
 import Data.Map qualified as M
 import Parser.AST qualified as AST
+import Runtime.Value qualified as Value
 import Test.Hspec (Expectation, Spec, describe, it, pendingWith, shouldBe)
 
 spec :: Spec
@@ -10,6 +11,7 @@ spec = do
     passThroughSpec
     rewriteLiteralLine
     rewriteMiddleSpec
+    rewriteListSpec
 
     rewriteExpressions
 
@@ -46,6 +48,39 @@ rewriteMiddleSpec = do
                                                     [ AST.Literal "middle text"
                                                     ]
                                                 ]
+                                            ]
+
+rewriteListSpec :: Spec
+rewriteListSpec = do
+    describe "list" $ do
+        it "produces list items separated by newlines, waiting between items" $
+            do
+                AST.Call "list" M.empty [AST.Literal "first", AST.Literal "second", AST.Literal "third"]
+                `shouldRewriteExpressionTo` [ AST.Literal "first"
+                                            , AST.Newline
+                                            , AST.Call "wait" M.empty []
+                                            , AST.Literal "second"
+                                            , AST.Newline
+                                            , AST.Call "wait" M.empty []
+                                            , AST.Literal "third"
+                                            , AST.Newline
+                                            ]
+
+        it "prefixes a bullet point" $
+            do
+                AST.Call
+                    "list"
+                    (M.fromList [("bullet", Value.Literal "*")])
+                    [ AST.Literal "first"
+                    , AST.Literal "second"
+                    ]
+                `shouldRewriteExpressionTo` [ AST.Literal "* "
+                                            , AST.Literal "first"
+                                            , AST.Newline
+                                            , AST.Call "wait" M.empty []
+                                            , AST.Literal "* "
+                                            , AST.Literal "second"
+                                            , AST.Newline
                                             ]
 
 rewriteExpressions :: Spec

@@ -1,10 +1,12 @@
 module Compiler.Internal.Rewrite where
 
+import Data.List qualified as L
 import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
 import Parser.AST qualified as AST
+import Runtime.Value qualified as Value
 
 type Rewrite = Either Text [AST.Expr]
 type RewriteFn = AST.Args -> [AST.Expr] -> Rewrite
@@ -27,6 +29,7 @@ rewriteRules :: Map Text RewriteFn
 rewriteRules =
     M.fromList
         [ ("middle", rewriteMiddle)
+        , ("list", rewriteList)
         ]
 
 rewriteMiddle :: RewriteFn
@@ -40,6 +43,20 @@ rewriteMiddle = withNoArgs "middle" middle
                 M.empty
                 [AST.Call "center" M.empty body]
             ]
+
+rewriteList :: RewriteFn
+rewriteList args =
+    pure
+        . L.intercalate [AST.Call "wait" M.empty []]
+        . map showItem
+  where
+    showItem :: AST.Expr -> [AST.Expr]
+    showItem e = bullet <> [e] <> [AST.Newline]
+
+    bullet :: [AST.Expr]
+    bullet = case M.lookup "bullet" args of
+        (Just (Value.Literal t)) -> [AST.Literal $ t <> " "]
+        _ -> []
 
 withNoArgs :: Text -> ([AST.Expr] -> Rewrite) -> AST.Args -> ([AST.Expr] -> Rewrite)
 withNoArgs name f args
