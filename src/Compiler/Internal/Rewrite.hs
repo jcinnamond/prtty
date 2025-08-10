@@ -1,5 +1,6 @@
 module Compiler.Internal.Rewrite where
 
+import Compiler.Internal.Sizes (width)
 import Compiler.Internal.Types (Compiler')
 import Control.Monad.Error.Class (MonadError (..))
 import Data.List qualified as L
@@ -32,6 +33,7 @@ rewriteRules =
     M.fromList
         [ ("middle", rewriteMiddle)
         , ("list", rewriteList)
+        , ("quote", rewriteQuote)
         ]
 
 rewriteMiddle :: RewriteFn
@@ -59,6 +61,48 @@ rewriteList args =
     bullet = case M.lookup "bullet" args of
         (Just (Value.Literal t)) -> [AST.Literal $ t <> " "]
         _ -> []
+
+rewriteQuote :: RewriteFn
+rewriteQuote _ [] = pure []
+rewriteQuote args body@[q] = do
+    cite <- qcite args body
+    pure $ [AST.Call "center" M.empty [qopen args, q, qclose args], AST.Newline] <> cite
+rewriteQuote args body@(x : xs) = do
+    cite <- qcite args body
+    pure $
+        [ AST.Call "center" M.empty [qopen args, x]
+        , AST.Newline
+        ]
+            <> showMiddle xs
+            <> [ AST.Call "center" M.empty [last xs, qclose args]
+               , AST.Newline
+               ]
+            <> cite
+  where
+    showMiddle :: [AST.Expr] -> [AST.Expr]
+    showMiddle [] = []
+    showMiddle [_] = []
+    showMiddle (l : ls) = AST.Call "center" M.empty [l] : AST.Newline : showMiddle ls
+
+qcite :: AST.Args -> [AST.Expr] -> Compiler' [AST.Expr]
+qcite args body = case M.lookup "citation" args of
+    Nothing -> pure []
+    (Just (Value.Literal c)) ->
+        let padding = T.replicate (longest body - T.length c - 1) " "
+         in pure [AST.Call "center" M.empty [quoteStyle args $ padding <> "- " <> c], AST.Newline]
+    (Just v) -> throwError $ "invalid citation: " <> T.show v
+  where
+    longest :: [AST.Expr] -> Int
+    longest b = maximum $ map (width . L.singleton) b
+
+qopen, qclose :: AST.Args -> AST.Expr
+qopen args = quoteStyle args "“"
+qclose = flip quoteStyle "”"
+
+quoteStyle :: AST.Args -> Text -> AST.Expr
+quoteStyle args t = case M.lookup "altColor" args of
+    Nothing -> AST.Literal t
+    (Just v) -> AST.Call "style" (M.fromList [("fg", v)]) [AST.Literal t]
 
 withNoArgs :: Text -> ([AST.Expr] -> Rewrite) -> AST.Args -> ([AST.Expr] -> Rewrite)
 withNoArgs name f args

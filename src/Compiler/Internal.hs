@@ -1,5 +1,6 @@
 module Compiler.Internal where
 
+import Compiler.Internal.Sizes (width)
 import Compiler.Internal.Types (Compiler, Compiler', setPrelude)
 import Control.Monad.Except (MonadError (throwError))
 import Data.Map qualified as M
@@ -38,7 +39,6 @@ compileBuiltin "style" = compileStyle
 compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin "exec" = compileExec
 compileBuiltin "image" = compileImage
-compileBuiltin "quote" = compileQuote
 compileBuiltin "backspace" = compileBackspace
 compileBuiltin "alternate" = compileAlternate
 compileBuiltin "startHere" = standalone "startHere" compileStartHere
@@ -99,33 +99,6 @@ compileBackspace args body = case M.lookup "count" args of
     pauseDuration = case M.lookup "delay" args of
         Just (Runtime.Duration d) -> d
         _ -> defaultDelay
-
-compileQuote :: AST.Args -> [AST.Expr] -> Compiler
-compileQuote _ [] = pure V.empty
-compileQuote args body = case M.lookup "citation" args of
-    Nothing ->
-        compileCenter $ style "“" <> body <> style "”"
-    (Just (Runtime.Literal cite)) -> do
-        let plen = width body - T.length cite
-            padding = T.replicate plen " "
-        q <- compileQuote (M.delete "citation" args) body
-        styledCitation <- compileExpressions $ style $ padding <> "- " <> cite
-        pure $
-            q
-                <> V.fromList
-                    [ Runtime.Newline
-                    , Runtime.Center $ width body + 2
-                    ]
-                <> styledCitation
-    _ -> throwError "invalid citation"
-  where
-    style :: Text -> [AST.Expr]
-    style t = case altColor of
-        Nothing -> [AST.Literal t]
-        (Just arg) -> [AST.Call "style" (M.fromList [("fg", arg)]) [AST.Literal t]]
-
-    altColor :: Maybe Value
-    altColor = M.lookup "altColor" args
 
 compileMoveTo :: AST.Args -> [AST.Expr] -> Compiler
 compileMoveTo args body = do
@@ -213,13 +186,6 @@ pushToLiteral f (e : es) = e : pushToLiteral f es
 
 compileCenter :: [AST.Expr] -> Compiler
 compileCenter exprs = compileWithBody (Runtime.Center (width exprs)) exprs
-
-width :: [AST.Expr] -> Int
-width [] = 0
-width (AST.Newline : xs) = width xs
-width (AST.Literal l : xs) = T.length l + width xs
-width (AST.LiteralLine l : xs) = T.length l + width xs
-width (AST.Call _ _ body : xs) = width body + width xs
 
 compileVCenter :: [AST.Expr] -> Compiler
 compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs

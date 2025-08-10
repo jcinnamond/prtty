@@ -39,6 +39,7 @@ library
     Compiler.Internal
     Compiler.Internal.References
     Compiler.Internal.Rewrite
+    Compiler.Internal.Sizes
     Compiler.Internal.Types
     Options
     Parser.AST

@@ -13,6 +13,7 @@ spec = do
     rewriteLiteralLine
     rewriteMiddleSpec
     rewriteListSpec
+    rewriteQuoteSpec
 
     rewriteExpressions
 
@@ -81,6 +82,143 @@ rewriteListSpec = do
                                             , AST.Call "wait" M.empty []
                                             , AST.Literal "* "
                                             , AST.Literal "second"
+                                            , AST.Newline
+                                            ]
+
+rewriteQuoteSpec :: Spec
+rewriteQuoteSpec = do
+    describe "quote" $ do
+        it "centers the text, wrapped with quotation marks" $
+            AST.Call "quote" M.empty [AST.Literal "a quote"]
+                `shouldRewriteExpressionTo` [ AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "“"
+                                                , AST.Literal "a quote"
+                                                , AST.Literal "”"
+                                                ]
+                                            , AST.Newline
+                                            ]
+
+        it "centers two lines" $
+            AST.Call "quote" M.empty [AST.Literal "first line", AST.Literal "second line"]
+                `shouldRewriteExpressionTo` [ AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "“"
+                                                , AST.Literal "first line"
+                                                ]
+                                            , AST.Newline
+                                            , AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "second line"
+                                                , AST.Literal "”"
+                                                ]
+                                            , AST.Newline
+                                            ]
+
+        it "centers multiple lines" $
+            AST.Call
+                "quote"
+                M.empty
+                [ AST.Literal "first line"
+                , AST.Literal "second line"
+                , AST.Literal "third line"
+                , AST.Literal "fourth line"
+                ]
+                `shouldRewriteExpressionTo` [ AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "“"
+                                                , AST.Literal "first line"
+                                                ]
+                                            , AST.Newline
+                                            , AST.Call "center" M.empty [AST.Literal "second line"]
+                                            , AST.Newline
+                                            , AST.Call "center" M.empty [AST.Literal "third line"]
+                                            , AST.Newline
+                                            , AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "fourth line"
+                                                , AST.Literal "”"
+                                                ]
+                                            , AST.Newline
+                                            ]
+
+        it "adds a citation" $
+            AST.Call "quote" (M.fromList [("citation", Value.Literal "a person")]) [AST.Literal "a long-ish quote"]
+                `shouldRewriteExpressionTo` [ AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "“"
+                                                , AST.Literal "a long-ish quote"
+                                                , AST.Literal "”"
+                                                ]
+                                            , AST.Newline
+                                            , AST.Call "center" M.empty [AST.Literal "       - a person"]
+                                            , AST.Newline
+                                            ]
+
+        it "aligns the quote with the longest line" $
+            AST.Call
+                "quote"
+                (M.fromList [("citation", Value.Literal "a person")])
+                [ AST.Literal "a very long line to open the quote"
+                , AST.Literal "with a short line"
+                ]
+                `shouldRewriteExpressionTo` [ AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "“"
+                                                , AST.Literal "a very long line to open the quote"
+                                                ]
+                                            , AST.Newline
+                                            , AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Literal "with a short line"
+                                                , AST.Literal "”"
+                                                ]
+                                            , AST.Newline
+                                            , AST.Call "center" M.empty [AST.Literal "                         - a person"]
+                                            , AST.Newline
+                                            ]
+
+        it "styles quotation marks" $
+            AST.Call "quote" (M.fromList [("altColor", Value.RGB 7 7 7)]) [AST.Literal "a quote"]
+                `shouldRewriteExpressionTo` [ AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Call "style" (M.fromList [("fg", Value.RGB 7 7 7)]) [AST.Literal "“"]
+                                                , AST.Literal "a quote"
+                                                , AST.Call "style" (M.fromList [("fg", Value.RGB 7 7 7)]) [AST.Literal "”"]
+                                                ]
+                                            , AST.Newline
+                                            ]
+        it "styles citations" $
+            AST.Call
+                "quote"
+                ( M.fromList
+                    [ ("citation", Value.Literal "bob")
+                    , ("altColor", Value.RGB 7 7 7)
+                    ]
+                )
+                [AST.Literal "a quote"]
+                `shouldRewriteExpressionTo` [ AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Call "style" (M.fromList [("fg", Value.RGB 7 7 7)]) [AST.Literal "“"]
+                                                , AST.Literal "a quote"
+                                                , AST.Call "style" (M.fromList [("fg", Value.RGB 7 7 7)]) [AST.Literal "”"]
+                                                ]
+                                            , AST.Newline
+                                            , AST.Call
+                                                "center"
+                                                M.empty
+                                                [ AST.Call "style" (M.fromList [("fg", Value.RGB 7 7 7)]) [AST.Literal "   - bob"]
+                                                ]
                                             , AST.Newline
                                             ]
 

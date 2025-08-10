@@ -3,7 +3,6 @@ module Compiler.BuiltinSpec (spec) where
 import Compiler.Internal (compileExpression, defaultDelay)
 import Compiler.Internal.Types (evalCompiler)
 import Data.Map qualified as M
-import Data.Text qualified as T
 import Data.Vector qualified as V
 import Parser.AST qualified as AST
 import Runtime.Instructions qualified as Runtime
@@ -313,74 +312,6 @@ spec = do
                 []
                 `shouldCompileExpressionTo` [ Runtime.Exec "cmd"
                                             , Runtime.Reset
-                                            ]
-
-    describe "'quote'" $ do
-        it "compiles quotes without an author" $
-            AST.Call "quote" M.empty [AST.Literal "a quote"]
-                `shouldCompileExpressionTo` [ Runtime.Center 9
-                                            , Runtime.Output "“"
-                                            , Runtime.Output "a quote"
-                                            , Runtime.Output "”"
-                                            ]
-        it "compiles quotes with an author" $
-            let q = "A quote that is longer than the author name"
-                qlen = T.length q + 2
-                citation = "Betty Author"
-                plen = qlen - T.length citation - 2
-                padding = T.replicate plen " "
-             in AST.Call
-                    "quote"
-                    (M.fromList [("citation", Runtime.Literal citation)])
-                    [AST.Literal q]
-                    `shouldCompileExpressionTo` [ Runtime.Center qlen
-                                                , Runtime.Output "“"
-                                                , Runtime.Output q
-                                                , Runtime.Output "”"
-                                                , Runtime.Newline
-                                                , Runtime.Center qlen
-                                                , Runtime.Output $ padding <> "- " <> citation
-                                                ]
-
-        it "styles the quotation marks" $
-            AST.Call "quote" (M.fromList [("altColor", Runtime.RGB 127 127 127)]) [AST.Literal "a quote"]
-                `shouldCompileExpressionTo` [ Runtime.Center 9
-                                            , Runtime.SaveStyle
-                                            , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
-                                            , Runtime.Output "“"
-                                            , Runtime.RestoreStyle
-                                            , Runtime.Output "a quote"
-                                            , Runtime.SaveStyle
-                                            , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
-                                            , Runtime.Output "”"
-                                            , Runtime.RestoreStyle
-                                            ]
-
-        it "styles the quotation marks and citation" $
-            AST.Call
-                "quote"
-                ( M.fromList
-                    [ ("citation", Runtime.Literal "person")
-                    , ("altColor", Runtime.RGB 127 127 127)
-                    ]
-                )
-                [AST.Literal "a longish quote"]
-                `shouldCompileExpressionTo` [ Runtime.Center 17
-                                            , Runtime.SaveStyle
-                                            , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
-                                            , Runtime.Output "“"
-                                            , Runtime.RestoreStyle
-                                            , Runtime.Output "a longish quote"
-                                            , Runtime.SaveStyle
-                                            , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
-                                            , Runtime.Output "”"
-                                            , Runtime.RestoreStyle
-                                            , Runtime.Newline
-                                            , Runtime.Center 17
-                                            , Runtime.SaveStyle
-                                            , Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 127 127 127})
-                                            , Runtime.Output "         - person"
-                                            , Runtime.RestoreStyle
                                             ]
 
     describe "'backspace'" $ do
