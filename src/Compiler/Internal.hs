@@ -233,6 +233,7 @@ compileVCenter exprs = compileWithBody (Runtime.VCenter (height exprs)) exprs
       where
         vspace (Just (Runtime.Number x)) = x
         vspace _ = 1
+    height (AST.Call "list" _ body : xs) = length body + height xs
     height (AST.Call _ _ body : xs) = height body + height xs
 
 compileClear :: Vector Instruction
