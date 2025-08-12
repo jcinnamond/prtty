@@ -5,7 +5,9 @@ license:
 author: John Cinnamond
 maintainer: john@cinnamond.me.uk
 build-type: Simple
-extra-doc-files: CHANGELOG.md
+extra-doc-files:
+  CHANGELOG.md
+  README.md
 
 common shared
   ghc-options: -Wall
