@@ -10,7 +10,7 @@ import Data.Text.Encoding qualified as TE
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
 import Data.Vector qualified as V
-import Runtime.Instructions (Anchor (..), Instruction (..), Style (..))
+import Runtime.Instructions (Anchor (..), Instruction (..), Style (..), emptyStyle)
 import Runtime.Value (Value (..), nanoseconds)
 import Runtime.Value qualified as RuntimeValue
 import System.Console.Terminal.Size qualified as TSize
@@ -54,12 +54,7 @@ newEnvironment is = do
             , width = twidth
             , topMargin = 0
             , leftMargin = 0
-            , currentStyle =
-                Style
-                    { fgColor = Just $ RGB 0 0 0
-                    , bgColor = Just $ RGB 255 255 255
-                    , bold = Nothing
-                    }
+            , currentStyle = emptyStyle
             , styleHistory = []
             }
 
@@ -183,7 +178,7 @@ runRestoreStyles = do
             modify (\e -> e{currentStyle = x, styleHistory = xs})
 
 outputStyle :: Style -> Runtime
-outputStyle s = out $ styleFgColor s.fgColor <> styleBgColor s.bgColor <> styleBold s.bold
+outputStyle s = out $ styleFgColor s.fgColor <> styleBgColor s.bgColor <> styleBold s.bold <> styleItalic s.italic
   where
     styleFgColor Nothing = ""
     styleFgColor (Just (RGB r g b)) = VT.fgColor r g b
@@ -196,6 +191,10 @@ outputStyle s = out $ styleFgColor s.fgColor <> styleBgColor s.bgColor <> styleB
     styleBold Nothing = VT.resetBold
     styleBold (Just Toggle) = VT.bold
     styleBold _ = error "unimplemented"
+
+    styleItalic Nothing = VT.resetItalic
+    styleItalic (Just Toggle) = VT.italic
+    styleItalic _ = error "unimplemented"
 
 runSetStyle :: Style -> Runtime
 runSetStyle s = do

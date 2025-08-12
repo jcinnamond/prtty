@@ -273,6 +273,9 @@ spec = do
             it "sets bold" $
                 AST.Call "style" (M.fromList [("bold", Runtime.Toggle)]) []
                     `shouldCompileExpressionTo` [Runtime.SetStyle (nostyle{Runtime.bold = Just Runtime.Toggle})]
+            it "sets italic" $
+                AST.Call "style" (M.fromList [("italic", Runtime.Toggle)]) []
+                    `shouldCompileExpressionTo` [Runtime.SetStyle (nostyle{Runtime.italic = Just Runtime.Toggle})]
             it "sets fg color" $
                 AST.Call "style" (M.fromList [("fg", Runtime.RGB 77 77 77)]) []
                     `shouldCompileExpressionTo` [Runtime.SetStyle (nostyle{Runtime.fgColor = Just $ Runtime.RGB 77 77 77})]

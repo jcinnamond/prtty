@@ -20,6 +20,8 @@ module VT (
     moveToRow,
     moveLeft,
     moveUp,
+    italic,
+    resetItalic,
 )
 where
 
@@ -56,6 +58,10 @@ showCursor = esc <> "?25h"
 bold, resetBold :: Text
 bold = esc <> "1m"
 resetBold = esc <> "22m"
+
+italic, resetItalic :: Text
+italic = esc <> "3m"
+resetItalic = esc <> "23m"
 
 fgColor, bgColor :: Int -> Int -> Int -> Text
 fgColor r g b = esc <> "38;2;" <> T.show r <> ";" <> T.show g <> ";" <> T.show b <> "m"

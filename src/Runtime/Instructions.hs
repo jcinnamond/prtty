@@ -41,6 +41,7 @@ data Style
     { fgColor :: Maybe Value
     , bgColor :: Maybe Value
     , bold :: Maybe Value
+    , italic :: Maybe Value
     }
     deriving stock (Show, Eq)
 
@@ -50,6 +51,7 @@ instance Semigroup Style where
             { fgColor = b.fgColor <|> a.fgColor
             , bgColor = b.bgColor <|> a.bgColor
             , bold = b.bold <|> a.bold
+            , italic = b.italic <|> a.italic
             }
 
 emptyStyle :: Style
@@ -58,7 +60,8 @@ emptyStyle =
         { fgColor = Nothing
         , bgColor = Nothing
         , bold = Nothing
+        , italic = Nothing
         }
 
 nullStyle :: Style -> Bool
-nullStyle s = isNothing s.fgColor && isNothing s.bgColor && isNothing s.bold
+nullStyle s = isNothing s.fgColor && isNothing s.bgColor && isNothing s.bold && isNothing s.italic

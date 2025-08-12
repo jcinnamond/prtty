@@ -231,6 +231,7 @@ compileStyle args body = do
     let style =
             Runtime.emptyStyle
                 { Runtime.bold = M.lookup "bold" args
+                , Runtime.italic = M.lookup "italic" args
                 , Runtime.fgColor = M.lookup "fg" args
                 , Runtime.bgColor = M.lookup "bg" args
                 }
