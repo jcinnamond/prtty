@@ -22,16 +22,9 @@ spec = do
     it "compiles 'wait'" $ AST.Call "wait" M.empty [] `shouldCompileExpressionTo` [Runtime.WaitForInput]
 
     it "compiles slides" $
-        AST.Call
-            "slide"
-            M.empty
-            [ AST.Call
-                "vcenter"
-                M.empty
-                [ AST.Literal "title"
-                ]
-            ]
-            `shouldCompileExpressionTo` [ Runtime.StoreBackMarker
+        AST.Call "slide" M.empty [AST.Call "vcenter" M.empty [AST.Literal "title"]]
+            `shouldCompileExpressionTo` [ Runtime.SetMarker "slide1"
+                                        , Runtime.StoreBackMarker
                                         , Runtime.Output VT.clear
                                         , Runtime.Home
                                         , Runtime.VCenter 0
@@ -440,6 +433,15 @@ spec = do
                                             , Runtime.Output "d"
                                             , Runtime.Pause $ Runtime.Milliseconds 2
                                             ]
+
+    waypointSpec
+
+waypointSpec :: Spec
+waypointSpec = do
+    describe "waypoint" $
+        it "inserts a marker" $
+            AST.Call "waypoint" (M.fromList [("name", Runtime.Literal "marker1")]) []
+                `shouldCompileExpressionTo` [Runtime.SetMarker "marker1"]
 
 nostyle :: Runtime.Style
 nostyle = Runtime.emptyStyle

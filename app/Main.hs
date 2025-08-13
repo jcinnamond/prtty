@@ -41,7 +41,7 @@ runParser o = do
 
 runCompiler :: Options -> [Presentation] -> App (Vector Instruction)
 runCompiler o p = do
-    let ir = compile p
+    let ir = compile o p
     handlingError ir $ if o.debugIR then debug else pure
 
 runPresentation :: Options -> Vector Instruction -> App ()

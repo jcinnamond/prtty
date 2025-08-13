@@ -1,7 +1,7 @@
 module Compiler.Internal where
 
 import Compiler.Internal.Sizes (width)
-import Compiler.Internal.Types (Compiler, Compiler', setPrelude)
+import Compiler.Internal.Types (Compiler, Compiler', incSlideCount, setPrelude)
 import Control.Monad.Except (MonadError (throwError))
 import Data.Map qualified as M
 import Data.Text (Text)
@@ -41,17 +41,25 @@ compileBuiltin "exec" = compileExec
 compileBuiltin "image" = compileImage
 compileBuiltin "backspace" = compileBackspace
 compileBuiltin "alternate" = compileAlternate
-compileBuiltin "startHere" = standalone "startHere" compileStartHere
 compileBuiltin "prelude" = withNoArgs "prelude" compilePrelude
+compileBuiltin "waypoint" = compileWaypoint
 compileBuiltin x = unrecognised x
+
+compileWaypoint :: AST.Args -> [AST.Expr] -> Compiler
+compileWaypoint args body = do
+    marker <- setMarker
+    withNoBody "waypoint" marker body
+  where
+    setMarker :: Compiler
+    setMarker = case M.lookup "name" args of
+        Nothing -> throwError "missing waypoint marker name"
+        Just (Runtime.Literal n) -> pure $ V.singleton $ Runtime.SetMarker n
+        x -> throwError $ "invalid value for waypoint marker name" <> T.show x
 
 compilePrelude :: [AST.Expr] -> Compiler
 compilePrelude body = do
     compileExpressions body >>= setPrelude
     pure V.empty
-
-compileStartHere :: Vector Instruction
-compileStartHere = V.singleton $ Runtime.SetMarker "startHere"
 
 compileAlternate :: AST.Args -> [AST.Expr] -> Compiler
 compileAlternate args body = do
@@ -142,8 +150,12 @@ compileVSpace args = withNoBody "vspace" vspace
 
 compileSlide :: [AST.Expr] -> Compiler
 compileSlide body = do
+    count <- incSlideCount
     rest <- compileExpressions body
-    pure $ compileClear <> rest <> compileWait
+    pure $ marker count <> compileClear <> rest <> compileWait
+  where
+    marker :: Int -> Vector Instruction
+    marker c = V.singleton $ Runtime.SetMarker $ "slide" <> T.show c
 
 compileType :: AST.Args -> [AST.Expr] -> Compiler
 compileType _ [] = pure V.empty
