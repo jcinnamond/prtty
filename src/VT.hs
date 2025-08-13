@@ -12,14 +12,15 @@ module VT (
     moveToCol,
     moveRight,
     moveDown,
+    moveToRow,
+    moveLeft,
+    moveUp,
+    eraseLine,
     -- Styles
     bold,
     fgColor,
     bgColor,
     resetBold,
-    moveToRow,
-    moveLeft,
-    moveUp,
     italic,
     resetItalic,
 )
@@ -54,6 +55,9 @@ noAltBuffer = esc <> "?1049l"
 hideCursor, showCursor :: Text
 hideCursor = esc <> "?25l"
 showCursor = esc <> "?25h"
+
+eraseLine :: Text
+eraseLine = esc <> "2K"
 
 bold, resetBold :: Text
 bold = esc <> "1m"

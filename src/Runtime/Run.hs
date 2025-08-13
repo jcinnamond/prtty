@@ -6,6 +6,7 @@ import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.State (StateT, execStateT, gets, modify)
 import Data.Text (Text)
+import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Data.Text.IO qualified as TIO
 import Data.Vector (Vector, (!?))
@@ -85,6 +86,13 @@ restoreTerminal = do
     out $
         VT.showCursor
             <> VT.noAltBuffer
+
+withEcho :: IO a -> IO a
+withEcho f = do
+    hSetEcho stdin True
+    x <- f
+    hSetEcho stdin False
+    pure x
 
 run' :: Environment -> IO ()
 run' e = do
@@ -213,10 +221,34 @@ runWaitForInput = do
                 == "[5~"
                 then runMoveBack
                 else nochange
+        ':' -> do
+            height <- gets height
+            out $ VT.moveTo height 0 <> VT.eraseLine <> ": "
+            marker <- liftIO $ withEcho getLine
+            jumpToMarker $ T.pack marker
         'b' -> runMoveBack
         'q' -> modify stop
         '.' -> modify stop
         _ -> nochange
+
+jumpToMarker :: Text -> Runtime
+jumpToMarker marker = do
+    location <- findMarker marker
+    case location of
+        Nothing -> do
+            out $ "can't find " <> marker
+            runWaitForInput
+        Just i -> runJump i
+
+findMarker :: Text -> StateT Environment IO (Maybe Int)
+findMarker marker = do
+    gets (V.findIndex (find marker) . instructions)
+  where
+    find :: Text -> Instruction -> Bool
+    find x (SetMarker y)
+        | x == y = True
+        | otherwise = False
+    find _ _ = False
 
 runHome :: Runtime
 runHome = do
