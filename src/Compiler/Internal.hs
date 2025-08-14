@@ -39,7 +39,6 @@ compileBuiltin "style" = compileStyle
 compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin "exec" = compileExec
 compileBuiltin "backspace" = compileBackspace
-compileBuiltin "alternate" = compileAlternate
 compileBuiltin "prelude" = withNoArgs "prelude" compilePrelude
 compileBuiltin "waypoint" = compileWaypoint
 compileBuiltin x = unrecognised x
@@ -59,33 +58,6 @@ compilePrelude :: [AST.Expr] -> Compiler
 compilePrelude body = do
     compileExpressions body >>= setPrelude
     pure V.empty
-
-compileAlternate :: AST.Args -> [AST.Expr] -> Compiler
-compileAlternate args body = do
-    literals <- getLiterals body
-    compileExpressions $ interleave (toType literals) (toDelete $ take (length literals - 1) literals)
-  where
-    getLiterals :: [AST.Expr] -> Compiler' [Text]
-    getLiterals [] = pure []
-    getLiterals (AST.Literal t : rest) = (t :) <$> getLiterals rest
-    getLiterals e = throwError $ "cannot use " <> T.show e <> " as an alternate"
-
-    toType :: [Text] -> [AST.Expr]
-    toType = map (\t -> AST.Call "type" delay [AST.Literal t])
-
-    toDelete :: [Text] -> [AST.Expr]
-    toDelete = map (\t -> AST.Call "backspace" (M.insert "count" (Runtime.Number $ T.length t) delay) [])
-
-    interleave :: [AST.Expr] -> [AST.Expr] -> [AST.Expr]
-    interleave (x : xs) (y : ys) = x : AST.Call "wait" M.empty [] : y : interleave xs ys
-    interleave [] [] = []
-    interleave xs [] = xs
-    interleave [] ys = ys
-
-    delay :: AST.Args
-    delay = case M.lookup "delay" args of
-        Nothing -> M.empty
-        (Just v) -> M.fromList [("delay", v)]
 
 compileBackspace :: AST.Args -> [AST.Expr] -> Compiler
 compileBackspace args body = case M.lookup "count" args of

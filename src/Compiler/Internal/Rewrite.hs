@@ -34,6 +34,7 @@ rewriteRules =
         [ ("middle", rewriteMiddle)
         , ("list", rewriteList)
         , ("quote", rewriteQuote)
+        , ("alternate", rewriteAlternate)
         ]
 
 rewriteMiddle :: RewriteFn
@@ -103,6 +104,33 @@ quoteStyle :: AST.Args -> Text -> AST.Expr
 quoteStyle args t = case M.lookup "altColor" args of
     Nothing -> AST.Literal t
     (Just v) -> AST.Call "style" (M.fromList [("fg", v)]) [AST.Literal t]
+
+rewriteAlternate :: RewriteFn
+rewriteAlternate args body = do
+    literals <- getLiterals body
+    pure $ interleave (toType literals) (toDelete $ take (length literals - 1) literals)
+  where
+    getLiterals :: [AST.Expr] -> Compiler' [Text]
+    getLiterals [] = pure []
+    getLiterals (AST.Literal t : rest) = (t :) <$> getLiterals rest
+    getLiterals e = throwError $ "cannot use " <> T.show e <> " as an alternate"
+
+    toType :: [Text] -> [AST.Expr]
+    toType = map (\t -> AST.Call "type" delay [AST.Literal t])
+
+    toDelete :: [Text] -> [AST.Expr]
+    toDelete = map (\t -> AST.Call "backspace" delay [AST.Literal t])
+
+    interleave :: [AST.Expr] -> [AST.Expr] -> [AST.Expr]
+    interleave (x : xs) (y : ys) = x : AST.Call "wait" M.empty [] : y : interleave xs ys
+    interleave [] [] = []
+    interleave xs [] = xs
+    interleave [] ys = ys
+
+    delay :: AST.Args
+    delay = case M.lookup "delay" args of
+        Nothing -> M.empty
+        (Just v) -> M.fromList [("delay", v)]
 
 withNoArgs :: Text -> ([AST.Expr] -> Rewrite) -> AST.Args -> ([AST.Expr] -> Rewrite)
 withNoArgs name f args

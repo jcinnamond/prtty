@@ -14,6 +14,7 @@ spec = do
     rewriteMiddleSpec
     rewriteListSpec
     rewriteQuoteSpec
+    rewriteAlternateSpec
 
     rewriteExpressions
 
@@ -222,6 +223,24 @@ rewriteQuoteSpec = do
                                             , AST.Newline
                                             ]
 
+rewriteAlternateSpec :: Spec
+rewriteAlternateSpec = do
+    describe "alternate" $ do
+        it "types, waits, and then deletes literals" $
+            AST.Call "alternate" M.empty [AST.Literal "first", AST.Literal "second"]
+                `shouldRewriteExpressionTo` [ AST.Call "type" M.empty [AST.Literal "first"]
+                                            , AST.Call "wait" M.empty []
+                                            , AST.Call "backspace" M.empty [AST.Literal "first"]
+                                            , AST.Call "type" M.empty [AST.Literal "second"]
+                                            ]
+
+        it "allows the delay to be overridden" $
+            AST.Call "alternate" (M.fromList [("delay", Value.Duration $ Value.Milliseconds 2)]) [AST.Literal "first", AST.Literal "second"]
+                `shouldRewriteExpressionTo` [ AST.Call "type" (M.fromList [("delay", Value.Duration $ Value.Milliseconds 2)]) [AST.Literal "first"]
+                                            , AST.Call "wait" M.empty []
+                                            , AST.Call "backspace" (M.fromList [("delay", Value.Duration $ Value.Milliseconds 2)]) [AST.Literal "first"]
+                                            , AST.Call "type" (M.fromList [("delay", Value.Duration $ Value.Milliseconds 2)]) [AST.Literal "second"]
+                                            ]
 rewriteExpressions :: Spec
 rewriteExpressions = do
     describe "rewriteExpressions" $ do
