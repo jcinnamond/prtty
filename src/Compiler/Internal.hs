@@ -38,7 +38,6 @@ compileBuiltin "type" = compileType
 compileBuiltin "style" = compileStyle
 compileBuiltin "slide" = withNoArgs "slide" compileSlide
 compileBuiltin "exec" = compileExec
-compileBuiltin "image" = compileImage
 compileBuiltin "backspace" = compileBackspace
 compileBuiltin "alternate" = compileAlternate
 compileBuiltin "prelude" = withNoArgs "prelude" compilePrelude
@@ -131,15 +130,6 @@ compileExec args body = case M.lookup "cmd" args of
   where
     maybeReset :: Vector Instruction
     maybeReset = maybe V.empty (const $ V.singleton Runtime.Reset) (M.lookup "interactive" args)
-
-compileImage :: AST.Args -> [AST.Expr] -> Compiler
-compileImage args body = case M.lookup "path" args of
-    Nothing -> throwError "missing image path"
-    (Just (Runtime.Filepath path)) -> withNoBody "image" (image path) body
-    _ -> throwError "malformed image instruction"
-  where
-    image :: Text -> Vector Instruction
-    image path = V.singleton $ Runtime.Exec $ "kitten icat --align center " <> path
 
 compileVSpace :: AST.Args -> [AST.Expr] -> Compiler
 compileVSpace args = withNoBody "vspace" vspace

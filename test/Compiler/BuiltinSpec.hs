@@ -288,11 +288,6 @@ spec = do
                                                 , Runtime.RestoreStyle
                                                 ]
 
-    describe "'img'" $
-        it "generates an instruction to show the image" $
-            AST.Call "image" (M.fromList [("path", Runtime.Filepath "path.png")]) []
-                `shouldCompileExpressionTo` [Runtime.Exec $ "kitten icat --align center " <> "path.png"]
-
     describe "'exec'" $ do
         it "generates an instruction to execute a command" $
             AST.Call "exec" (M.fromList [("cmd", Runtime.Literal "cmd and args")]) []
