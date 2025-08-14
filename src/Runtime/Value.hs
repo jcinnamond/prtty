@@ -5,6 +5,8 @@ module Runtime.Value (
 ) where
 
 import Data.Text (Text)
+import Data.Text qualified as T
+import PrettyPrint
 
 data Value
     = Number Int
@@ -17,6 +19,17 @@ data Value
     | Toggle
     | Reference Text
     deriving stock (Show, Eq)
+
+instance PrettyPrint Value where
+    pretty (Number i) = T.show i
+    pretty (Rational n d) = T.show n <> "/" <> T.show d
+    pretty (Percentage i) = T.show i <> "%"
+    pretty (Duration d) = pretty d
+    pretty (RGB r g b) = "RGB " <> T.show r <> " " <> T.show g <> " " <> T.show b
+    pretty (Literal t) = "\"" <> t <> "\""
+    pretty (Filepath t) = t
+    pretty Toggle = ""
+    pretty (Reference t) = "$" <> t
 
 data Duration
     = Seconds Int
