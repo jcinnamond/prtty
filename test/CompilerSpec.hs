@@ -1,6 +1,6 @@
 module CompilerSpec (spec) where
 
-import Compiler.Compiler (compile)
+import Compiler.Compiler (compile, resolveReferences)
 import Compiler.Internal (compileExpression)
 import Compiler.Internal.Types (evalCompiler)
 import Data.Either (isLeft)
@@ -17,6 +17,7 @@ spec :: Spec
 spec = do
     compileLiteralSpec
     compileNewlineSpec
+    resolveSpec
     compileSpec
     compilePreludeSpec
     compileJumpSpec
@@ -31,29 +32,10 @@ compileNewlineSpec = do
     it "outputs the newline" $ do
         AST.Newline `shouldCompileTo` [Runtime.Newline]
 
-compileSpec :: Spec
-compileSpec = do
-    it "compiles empty presentations" $
-        compile options [] `shouldBe` Right V.empty
-
-    it "compiles simple presentations" $
-        compile
-            options
-            [ AST.Presentation [AST.PExpr $ AST.Call "clear" M.empty []]
-            , AST.Presentation [AST.PExpr $ AST.Literal "hi"]
-            ]
-            `shouldBe` Right
-                ( V.fromList
-                    [ Runtime.StoreBackMarker
-                    , Runtime.Output VT.clear
-                    , Runtime.Home
-                    , Runtime.Output "hi"
-                    ]
-                )
-
-    it "compiles presentations with references" $
-        compile
-            options
+resolveSpec :: Spec
+resolveSpec = do
+    it "resolves references" $ do
+        resolveReferences
             [ AST.Presentation [AST.PDef "margin" $ Runtime.Number 10]
             , AST.Presentation
                 [ AST.PExpr $
@@ -64,26 +46,33 @@ compileSpec = do
                 ]
             ]
             `shouldBe` Right
+                [ AST.Call "moveTo" (M.fromList [("x", Runtime.Number 10)]) []
+                ]
+
+compileSpec :: Spec
+compileSpec = do
+    it "compiles empty presentations" $
+        compile options [] `shouldBe` Right V.empty
+
+    it "compiles simple presentations" $
+        compile
+            options
+            [ AST.Call "clear" M.empty []
+            , AST.Literal "hi"
+            ]
+            `shouldBe` Right
                 ( V.fromList
-                    [ Runtime.MoveTo
-                        Nothing
-                        (Just $ Runtime.Number 10)
-                        Runtime.Margin
+                    [ Runtime.StoreBackMarker
+                    , Runtime.Output VT.clear
+                    , Runtime.Home
+                    , Runtime.Output "hi"
                     ]
                 )
-
     it "reduces expressions" $
         compile
             options
-            [ AST.Presentation
-                [ AST.PExpr $
-                    AST.Call
-                        "slide"
-                        M.empty
-                        [ AST.Call "middle" M.empty [AST.Literal "hello"]
-                        ]
-                , AST.PExpr $ AST.Call "slide" M.empty [AST.Literal "hi"]
-                ]
+            [ AST.Call "slide" M.empty [AST.Call "vcenter" M.empty [AST.Literal "hello"]]
+            , AST.Call "slide" M.empty [AST.Literal "hi"]
             ]
             `shouldBe` Right
                 ( V.fromList
@@ -92,7 +81,6 @@ compileSpec = do
                     , Runtime.Output VT.clear
                     , Runtime.Home
                     , Runtime.VCenter 0
-                    , Runtime.Center 5
                     , Runtime.Output "hello"
                     , Runtime.WaitForInput
                     , Runtime.SetMarker "slide2"
@@ -108,7 +96,7 @@ compileSpec = do
         let result =
                 compile
                     options
-                    [AST.Presentation [AST.PExpr $ AST.Call "unknown" M.empty []]]
+                    [AST.Call "unknown" M.empty []]
         isLeft result `shouldBe` True
 
 compilePreludeSpec :: Spec
@@ -118,17 +106,13 @@ compilePreludeSpec = do
             do
                 compile
                     options
-                    [ AST.Presentation
-                        [AST.PExpr $ AST.Literal "Hi"]
-                    , AST.Presentation
-                        [ AST.PExpr $
-                            AST.Call
-                                "prelude"
-                                M.empty
-                                [ AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []
-                                ]
-                        , AST.PExpr $ AST.Literal "Bye"
+                    [ AST.Literal "Hi"
+                    , AST.Call
+                        "prelude"
+                        M.empty
+                        [ AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []
                         ]
+                    , AST.Literal "Bye"
                     ]
                 `shouldBe` Right
                     ( V.fromList
@@ -142,19 +126,10 @@ compilePreludeSpec = do
             do
                 compile
                     options
-                    [ AST.Presentation
-                        [ AST.PExpr $ AST.Literal "Hi"
-                        , AST.PExpr $ AST.Call "prelude" M.empty [AST.Literal "start of presentation"]
-                        ]
-                    , AST.Presentation
-                        [ AST.PExpr $
-                            AST.Call
-                                "prelude"
-                                M.empty
-                                [ AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []
-                                ]
-                        , AST.PExpr $ AST.Literal "Bye"
-                        ]
+                    [ AST.Literal "Hi"
+                    , AST.Call "prelude" M.empty [AST.Literal "start of presentation"]
+                    , AST.Call "prelude" M.empty [AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []]
+                    , AST.Literal "Bye"
                     ]
                 `shouldBe` Right
                     ( V.fromList
@@ -172,12 +147,10 @@ compileJumpSpec = do
             do
                 compile
                     options{startAt = Just "marker1"}
-                    [ AST.Presentation
-                        [ AST.PExpr $ AST.Literal "something"
-                        , AST.PExpr $ AST.Literal "something else"
-                        , AST.PExpr $ AST.Call "waypoint" (M.fromList [("name", Runtime.Literal "marker1")]) []
-                        , AST.PExpr $ AST.Literal "another thing"
-                        ]
+                    [ AST.Literal "something"
+                    , AST.Literal "something else"
+                    , AST.Call "waypoint" (M.fromList [("name", Runtime.Literal "marker1")]) []
+                    , AST.Literal "another thing"
                     ]
                 `shouldBe` Right
                     ( V.fromList
@@ -193,20 +166,11 @@ compileJumpSpec = do
             do
                 compile
                     options{startAt = Just "marker1"}
-                    [ AST.Presentation
-                        [ AST.PExpr $
-                            AST.Call
-                                "prelude"
-                                M.empty
-                                [ AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []
-                                ]
-                        , AST.PExpr $ AST.Literal "something"
-                        ]
-                    , AST.Presentation
-                        [ AST.PExpr $ AST.Literal "something else"
-                        , AST.PExpr $ AST.Call "waypoint" (M.fromList [("name", Runtime.Literal "marker1")]) []
-                        , AST.PExpr $ AST.Literal "another thing"
-                        ]
+                    [ AST.Call "prelude" M.empty [AST.Call "margin" (M.fromList [("left", Runtime.Number 10)]) []]
+                    , AST.Literal "something"
+                    , AST.Literal "something else"
+                    , AST.Call "waypoint" (M.fromList [("name", Runtime.Literal "marker1")]) []
+                    , AST.Literal "another thing"
                     ]
                 `shouldBe` Right
                     ( V.fromList
@@ -223,6 +187,8 @@ options :: Options
 options =
     Options
         { debugAST = False
+        , debugResolver = False
+        , debugRewrite = False
         , debugIR = False
         , startAt = Nothing
         , inputs = []

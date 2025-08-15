@@ -1,5 +1,7 @@
 module Compiler.Compiler (
     compile,
+    rewrite,
+    resolveReferences,
 ) where
 
 import Compiler.Internal (compileExpressions)
@@ -12,13 +14,13 @@ import Data.Text qualified as T
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Options (Options (..))
-import Parser.AST (Presentation (..))
+import Parser.AST qualified as AST
 import Runtime.Instructions (Instruction)
 import Runtime.Instructions qualified as Runtime
 
-compile :: Options -> [Presentation] -> Either Text (Vector Instruction)
-compile o ps = do
-    let (es, s) = runCompiler (resolveReferences ps >>= rewrite >>= compileExpressions)
+compile :: Options -> [AST.Expr] -> Either Text (Vector Instruction)
+compile o body = do
+    let (es, s) = runCompiler $ compileExpressions body
     es >>= jump o s >>= addPrelude s
 
 addPrelude :: CompilerState -> Vector Instruction -> Either Text (Vector Instruction)

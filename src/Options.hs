@@ -7,6 +7,8 @@ import Options.Applicative (Parser, argument, help, long, metavar, optional, som
 
 data Options = Options
     { debugAST :: !Bool
+    , debugResolver :: !Bool
+    , debugRewrite :: !Bool
     , debugIR :: !Bool
     , startAt :: !(Maybe String)
     , inputs :: [FilePath]
@@ -19,6 +21,14 @@ options =
         <$> switch
             ( long "debugAST"
                 <> help "Print out the AST"
+            )
+        <*> switch
+            ( long "debugResolver"
+                <> help "Print out the AST after resolving references"
+            )
+        <*> switch
+            ( long "debugRewrite"
+                <> help "Print out the AST after running it through rewrite rules"
             )
         <*> switch
             ( long "debugIR"

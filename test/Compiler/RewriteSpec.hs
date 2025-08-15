@@ -1,11 +1,10 @@
 module Compiler.RewriteSpec (spec) where
 
-import Compiler.Helpers (shouldCompileTo)
 import Compiler.Internal.Rewrite (rewrite, rewriteExpression)
 import Data.Map qualified as M
 import Parser.AST qualified as AST
 import Runtime.Value qualified as Value
-import Test.Hspec (Expectation, Spec, describe, it, pendingWith)
+import Test.Hspec (Expectation, Spec, describe, it, pendingWith, shouldBe)
 
 spec :: Spec
 spec = do
@@ -245,15 +244,16 @@ rewriteExpressions :: Spec
 rewriteExpressions = do
     describe "rewriteExpressions" $ do
         it "rewrites each expression" $ do
-            rewrite [] `shouldCompileTo` []
+            rewrite [] `shouldBe` Right []
             rewrite
                 [ AST.Call "middle" M.empty [AST.Literal "hi"]
                 , AST.LiteralLine "hello"
                 ]
-                `shouldCompileTo` [ AST.Call "vcenter" M.empty [AST.Call "center" M.empty [AST.Literal "hi"]]
-                                  , AST.Literal "hello"
-                                  , AST.Newline
-                                  ]
+                `shouldBe` Right
+                    [ AST.Call "vcenter" M.empty [AST.Call "center" M.empty [AST.Literal "hi"]]
+                    , AST.Literal "hello"
+                    , AST.Newline
+                    ]
 
         it "rewrites nested expressions" $ do
             rewrite
@@ -264,30 +264,32 @@ rewriteExpressions = do
                     , AST.LiteralLine "there"
                     ]
                 ]
-                `shouldCompileTo` [ AST.Call
-                                        "vcenter"
-                                        M.empty
-                                        [ AST.Literal "hello"
-                                        , AST.Newline
-                                        , AST.Literal "there"
-                                        , AST.Newline
-                                        ]
-                                  ]
+                `shouldBe` Right
+                    [ AST.Call
+                        "vcenter"
+                        M.empty
+                        [ AST.Literal "hello"
+                        , AST.Newline
+                        , AST.Literal "there"
+                        , AST.Newline
+                        ]
+                    ]
 
             rewrite [AST.Call "middle" M.empty [AST.LiteralLine "hello"]]
-                `shouldCompileTo` [ AST.Call
-                                        "vcenter"
-                                        M.empty
-                                        [ AST.Call
-                                            "center"
-                                            M.empty
-                                            [ AST.Literal "hello"
-                                            , AST.Newline
-                                            ]
-                                        ]
-                                  ]
+                `shouldBe` Right
+                    [ AST.Call
+                        "vcenter"
+                        M.empty
+                        [ AST.Call
+                            "center"
+                            M.empty
+                            [ AST.Literal "hello"
+                            , AST.Newline
+                            ]
+                        ]
+                    ]
 
         it "reapplies rewrite until everything is rewritten" $ pendingWith "no use case for this yet"
 
 shouldRewriteExpressionTo :: AST.Expr -> [AST.Expr] -> Expectation
-shouldRewriteExpressionTo e es = rewriteExpression e `shouldCompileTo` es
+shouldRewriteExpressionTo e es = rewriteExpression e `shouldBe` Right es

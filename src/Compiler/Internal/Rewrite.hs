@@ -1,7 +1,6 @@
 module Compiler.Internal.Rewrite where
 
 import Compiler.Internal.Sizes (width)
-import Compiler.Internal.Types (Compiler')
 import Control.Monad.Error.Class (MonadError (..))
 import Data.List qualified as L
 import Data.Map (Map)
@@ -11,7 +10,7 @@ import Data.Text qualified as T
 import Parser.AST qualified as AST
 import Runtime.Value qualified as Value
 
-type Rewrite = Compiler' [AST.Expr]
+type Rewrite = Either Text [AST.Expr]
 type RewriteFn = AST.Args -> [AST.Expr] -> Rewrite
 
 rewrite :: [AST.Expr] -> Rewrite
@@ -85,7 +84,7 @@ rewriteQuote args body@(x : xs) = do
     showMiddle [_] = []
     showMiddle (l : ls) = AST.Call "center" M.empty [l] : AST.Newline : showMiddle ls
 
-qcite :: AST.Args -> [AST.Expr] -> Compiler' [AST.Expr]
+qcite :: AST.Args -> [AST.Expr] -> Either Text [AST.Expr]
 qcite args body = case M.lookup "citation" args of
     Nothing -> pure []
     (Just (Value.Literal c)) ->
@@ -110,7 +109,7 @@ rewriteAlternate args body = do
     literals <- getLiterals body
     pure $ interleave (toType literals) (toDelete $ take (length literals - 1) literals)
   where
-    getLiterals :: [AST.Expr] -> Compiler' [Text]
+    getLiterals :: [AST.Expr] -> Either Text [Text]
     getLiterals [] = pure []
     getLiterals (AST.Literal t : rest) = (t :) <$> getLiterals rest
     getLiterals e = throwError $ "cannot use " <> T.show e <> " as an alternate"

@@ -1,6 +1,6 @@
 module Main where
 
-import Compiler.Compiler (compile)
+import Compiler.Compiler (compile, resolveReferences, rewrite)
 import Control.Monad.Except (ExceptT, MonadError (throwError), runExceptT)
 import Control.Monad.IO.Class (MonadIO (..))
 import Data.Text (Text)
@@ -9,6 +9,7 @@ import Data.Vector (Vector)
 import Options (Options (..), options)
 import Options.Applicative (ParserInfo, execParser, fullDesc, helper, info, progDesc, (<**>))
 import Parser.AST (Presentation)
+import Parser.AST qualified as AST
 import Parser.Parser (parseFiles)
 import PrettyPrint (Empty (..), PrettyPrint (..))
 import Runtime.Instructions (Instruction)
@@ -23,7 +24,7 @@ main = do
 
     result <-
         runExceptT $
-            runParser o >>= runCompiler o >>= runPresentation o
+            runParser o >>= runResolver o >>= runRewriter o >>= runCompiler o >>= runPresentation o
     case result of
         Left err -> TIO.putStrLn err
         Right _ -> pure ()
@@ -39,7 +40,17 @@ runParser o = do
     p <- liftIO $ parseFiles o.inputs
     handlingError p $ if o.debugAST then debug else pure
 
-runCompiler :: Options -> [Presentation] -> App (Vector Instruction)
+runResolver :: Options -> [Presentation] -> App [AST.Expr]
+runResolver o p = do
+    let es = resolveReferences p
+    handlingError es $ if o.debugResolver then debug else pure
+
+runRewriter :: Options -> [AST.Expr] -> App [AST.Expr]
+runRewriter o p = do
+    let p' = rewrite p
+    handlingError p' $ if o.debugRewrite then debug else pure
+
+runCompiler :: Options -> [AST.Expr] -> App (Vector Instruction)
 runCompiler o p = do
     let ir = compile o p
     handlingError ir $ if o.debugIR then debug else pure
