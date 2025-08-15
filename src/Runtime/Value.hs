@@ -36,6 +36,10 @@ data Duration
     | Milliseconds Int
     deriving stock (Show, Eq)
 
+instance PrettyPrint Duration where
+    pretty (Seconds i) = T.show i <> "s"
+    pretty (Milliseconds i) = T.show i <> "ms"
+
 nanoseconds :: Duration -> Int
 nanoseconds (Seconds x) = x * 1_000_000
 nanoseconds (Milliseconds x) = x * 1_000

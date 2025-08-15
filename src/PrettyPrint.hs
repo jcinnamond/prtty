@@ -18,8 +18,10 @@ class PrettyPrint a where
     pretty = prettyIndent ""
 
 instance (PrettyPrint a) => PrettyPrint [a] where
-    pretty [] = ""
-    pretty xs = T.concat $ map pretty xs
+    pretty = T.intercalate "\n" . map pretty
+
+instance (PrettyPrint a) => PrettyPrint (Vector a) where
+    pretty = T.intercalate "\n" . V.toList . V.map pretty
 
 instance {-# OVERLAPPABLE #-} (Show a) => PrettyPrint a where
     pretty = T.show

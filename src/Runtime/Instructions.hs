@@ -7,8 +7,10 @@ module Runtime.Instructions (
 ) where
 
 import Control.Applicative ((<|>))
-import Data.Maybe (isNothing)
+import Data.Maybe (catMaybes, isNothing)
 import Data.Text (Text)
+import Data.Text qualified as T
+import PrettyPrint (PrettyPrint (..))
 import Runtime.Value (Duration, Value)
 
 data Instruction
@@ -33,6 +35,14 @@ data Instruction
     | SetMarker Text
     deriving stock (Show, Eq)
 
+instance PrettyPrint Instruction where
+    pretty (SetTopMargin v) = "SetTopMargin " <> pretty v
+    pretty (SetLeftMargin v) = "SetLeftMargin " <> pretty v
+    pretty (MoveTo y x anchor) = "MoveTo y=" <> pretty y <> ", x=" <> pretty x <> " anchor=" <> pretty anchor
+    pretty (SetStyle s) = "SetStyle " <> pretty s
+    pretty (Pause d) = "Pause " <> pretty d
+    pretty x = T.show x
+
 data Anchor = TopLeft | BottomRight | Margin
     deriving stock (Show, Eq)
 
@@ -44,6 +54,24 @@ data Style
     , italic :: Maybe Value
     }
     deriving stock (Show, Eq)
+
+instance PrettyPrint Style where
+    pretty (Style{fgColor, bgColor, bold, italic}) =
+        T.intercalate
+            "; "
+            ( catMaybes
+                [ prettyColor "fgColor" fgColor
+                , prettyColor "bgColor" bgColor
+                , prettyAttribute "bold" bold
+                , prettyAttribute "italic" italic
+                ]
+            )
+
+prettyColor :: Text -> Maybe Value -> Maybe Text
+prettyColor l m = (\v -> l <> " = " <> pretty v) <$> m
+
+prettyAttribute :: Text -> Maybe Value -> Maybe Text
+prettyAttribute l m = l <$ m
 
 instance Semigroup Style where
     a <> b =
