@@ -36,7 +36,6 @@ library
   hs-source-dirs: src
   -- cabal-gild: discover src
   exposed-modules:
-    Cmd
     Compiler.Compiler
     Compiler.Internal
     Compiler.Internal.References
@@ -49,6 +48,14 @@ library
     Parser.Parser
     PrettyPrint
     Runtime.Instructions
+    Runtime.Internal.Exec
+    Runtime.Internal.IO
+    Runtime.Internal.Navigation
+    Runtime.Internal.Positioning
+    Runtime.Internal.Primitive
+    Runtime.Internal.Run
+    Runtime.Internal.Style
+    Runtime.Internal.Types
     Runtime.Run
     Runtime.Value
     VT
@@ -82,6 +89,9 @@ test-suite prtty-test
     Compiler.RewriteSpec
     CompilerSpec
     ParserSpec
+    Runtime.Helpers
+    Runtime.NavigationSpec
+    Runtime.PositioningSpec
 
   build-depends:
     hspec ^>=2.11.12,

@@ -88,3 +88,11 @@ Some basic type checking happens during the compilation but it's ad-hoc and unre
 ```
 .slide[valign=middle]
 ```
+
+#### Stackable margins
+Allow margins to take nested body, to support aligning a block of content.
+```
+.margin[x=25]
+    > Some text to the left
+    > Some more text to the left
+```
