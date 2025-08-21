@@ -3,22 +3,21 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
-    { nixpkgs, ... }:
-    let
-      system = "x86_64-linux";
-    in
-    {
-      devShells."${system}".default =
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-          };
-          haskellPackages = pkgs.haskell.packages.ghc9122;
-        in
-        pkgs.mkShell {
+    { flake-utils, nixpkgs, ... }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+        haskellPackages = pkgs.haskell.packages.ghc9122;
+      in
+      {
+        devShells.default = pkgs.mkShell {
           packages = [
             haskellPackages.ghc
             haskellPackages.haskell-language-server
@@ -28,5 +27,6 @@
             haskellPackages.hlint
           ];
         };
-    };
+      }
+    );
 }
