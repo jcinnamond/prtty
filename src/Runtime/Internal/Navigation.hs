@@ -14,8 +14,8 @@ import Runtime.Internal.Types (Environment (..), Instruction (..), Runtime)
 {- | Jump to a given instruction.
 The presentation will continue from that point.
 -}
-runJump :: Int -> Runtime
-runJump i = modify (\e -> e{pc = i})
+jump :: Int -> Runtime
+jump i = modify (\e -> e{pc = i})
 
 {- | Jump to a named marker.
 The presentation will continue from that point.
@@ -23,10 +23,10 @@ The presentation will continue from that point.
 If the marker can't be found the presentation silently continues from the
 current location.
 -}
-runJumpToMarker :: Text -> Runtime
-runJumpToMarker marker = do
+jumpToMarker :: Text -> Runtime
+jumpToMarker marker = do
     location <- findMarker marker
-    maybe (pure ()) runJump location
+    maybe (pure ()) jump location
 
 {- | Search for a named marker within the presentation, returning the
 instruction address if it is found.

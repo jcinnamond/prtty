@@ -85,7 +85,7 @@ test-suite prtty-test
     Compiler.RewriteSpec
     CompilerSpec
     ParserSpec
-    RuntimeSpec
+    Runtime.NavigationSpec
 
   build-depends:
     hspec ^>=2.11.12,
