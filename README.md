@@ -59,7 +59,7 @@ Maybe something like
 ```
 
 #### Inline styling in text literals
-I current write this a lot and it's awkward
+I currently write this a lot and it's awkward
 ```
 This has an 
 .style[fg=$highlight] << emphasised 
