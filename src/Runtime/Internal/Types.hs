@@ -95,20 +95,20 @@ type Runtime = StateT Environment IO ()
 
 data Environment = Environment
     { instructions :: Vector Instruction
-    , pc :: Int
+    , pc :: !Int
     -- ^ "program counter", a pointer to the next instruction to execute
     , backMarkers :: [Int]
     -- ^ a list of points to jump back to
-    , lastJump :: Maybe Int
+    , lastJump :: !(Maybe Int)
     -- ^ the last instruction we jumped back to, used to support pressing 'b' multiple times
-    , height :: Int
+    , height :: !Int
     -- ^ the height of the terminal, in characters
-    , width :: Int
+    , width :: !Int
     -- ^ the width of the terminal, in characters
-    , topMargin :: Int
-    , leftMargin :: Int
-    , currentStyle :: Style
-    , styleHistory :: [Style]
+    , topMargin :: !Int
+    , leftMargin :: !Int
+    , currentStyle :: !Style
+    , styleHistory :: ![Style]
     }
     deriving stock (Show, Eq)
 
