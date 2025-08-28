@@ -50,6 +50,7 @@ library
     PrettyPrint
     Runtime.Instructions
     Runtime.Internal.Navigation
+    Runtime.Internal.Positioning
     Runtime.Internal.Run
     Runtime.Internal.Types
     Runtime.Run
@@ -86,6 +87,7 @@ test-suite prtty-test
     CompilerSpec
     ParserSpec
     Runtime.NavigationSpec
+    Runtime.PositioningSpec
 
   build-depends:
     hspec ^>=2.11.12,
