@@ -50,6 +50,7 @@ library
     PrettyPrint
     Runtime.Instructions
     Runtime.Internal.Navigation
+    Runtime.Internal.Output
     Runtime.Internal.Positioning
     Runtime.Internal.Run
     Runtime.Internal.Types
@@ -86,6 +87,7 @@ test-suite prtty-test
     Compiler.RewriteSpec
     CompilerSpec
     ParserSpec
+    Runtime.Helpers
     Runtime.NavigationSpec
     Runtime.PositioningSpec
 
