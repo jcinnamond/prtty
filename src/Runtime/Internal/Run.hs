@@ -3,6 +3,7 @@ module Runtime.Internal.Run where
 import Control.Monad.State (execStateT)
 import Data.Vector ((!?))
 import Runtime.Internal.Navigation (jump)
+import Runtime.Internal.Positioning (runCenter, runHome, runMoveTo)
 import Runtime.Internal.Types (Environment (..), Instruction (..), Runtime)
 
 run' :: Environment -> IO ()
@@ -16,6 +17,10 @@ run' e = do
 runInstruction :: Instruction -> Runtime
 runInstruction (JumpTo i) = jump i
 runInstruction (SetMarker _) = pure ()
+runInstruction Home = runHome
+runInstruction (MoveTo y x anchor) = runMoveTo y x anchor
+runInstruction (Center x) = runCenter x
+runInstruction (VCenter x) = runCenter x
 runInstruction _ = undefined
 
 -- runInstruction (Output t) = out t
