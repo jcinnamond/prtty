@@ -1,7 +1,7 @@
 module Runtime.Internal.Types where
 
 import Control.Applicative ((<|>))
-import Control.Monad.State (StateT, evalStateT)
+import Control.Monad.State (StateT, evalStateT, execStateT)
 import Data.Maybe (catMaybes, isNothing)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -96,6 +96,9 @@ type Runtime = Runtime' ()
 
 evalRuntime :: Runtime' a -> Environment -> IO a
 evalRuntime = evalStateT
+
+execRuntime :: Runtime' a -> Environment -> IO Environment
+execRuntime = execStateT
 
 data Environment = Environment
     { instructions :: Vector Instruction

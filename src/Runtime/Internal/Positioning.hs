@@ -1,6 +1,6 @@
 module Runtime.Internal.Positioning where
 
-import Control.Monad.State (gets)
+import Control.Monad.State (gets, modify)
 import Runtime.Internal.Output (out)
 import Runtime.Internal.Types (Anchor (..), Environment (..), Runtime)
 import Runtime.Value
@@ -42,7 +42,7 @@ resolve :: Value -> Anchor -> Int -> Int -> Int
 resolve (RuntimeValue.Number x) TopLeft _ _ = x
 resolve (RuntimeValue.Rational n d) TopLeft limit _ = limit * n `div` d
 resolve (RuntimeValue.Percentage x) TopLeft limit margin = resolve (RuntimeValue.Rational x 100) TopLeft limit margin
-resolve v Margin limit margin = resolve v TopLeft limit margin + margin
+resolve v Margin limit margin = resolve v TopLeft (limit - margin * 2) margin + margin
 resolve v BottomRight limit margin = limit - resolve v TopLeft limit margin
 resolve v _ _ _ = error $ "can't move to " <> show v
 
@@ -66,3 +66,15 @@ moveToYX y x anchor = do
     width <- gets width
     leftMargin <- gets leftMargin
     out $ VT.moveTo (resolve y anchor height topMargin) (resolve x anchor width leftMargin)
+
+setTopMargin :: Value -> Runtime
+setTopMargin x = modify (\e -> e{topMargin = fromNumerical x e.height})
+
+setLeftMargin :: Value -> Runtime
+setLeftMargin x = modify (\e -> e{leftMargin = fromNumerical x e.width})
+
+fromNumerical :: Value -> Int -> Int
+fromNumerical (Number x) _ = x
+fromNumerical (Rational n d) x = x * n `div` d
+fromNumerical (Percentage p) x = fromNumerical (Rational p 100) x
+fromNumerical _ _ = error "non-numerical argument"

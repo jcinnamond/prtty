@@ -3,7 +3,7 @@ module Runtime.Internal.Run where
 import Control.Monad.State (execStateT)
 import Data.Vector ((!?))
 import Runtime.Internal.Navigation (jump)
-import Runtime.Internal.Positioning (runCenter, runHome, runMoveTo)
+import Runtime.Internal.Positioning (runCenter, runHome, runMoveTo, setLeftMargin, setTopMargin)
 import Runtime.Internal.Types (Environment (..), Instruction (..), Runtime)
 
 run' :: Environment -> IO ()
@@ -21,17 +21,13 @@ runInstruction Home = runHome
 runInstruction (MoveTo y x anchor) = runMoveTo y x anchor
 runInstruction (Center x) = runCenter x
 runInstruction (VCenter x) = runCenter x
+runInstruction (SetTopMargin x) = setTopMargin x -- modify $ setTopMargin x
+runInstruction (SetLeftMargin x) = setLeftMargin x -- modify $ setLeftMargin x
 runInstruction _ = undefined
 
 -- runInstruction (Output t) = out t
 -- runInstruction Newline = out "\n" >> moveToLeftMargin
 -- runInstruction StoreBackMarker = modify storeBackMarker
--- runInstruction (SetTopMargin x) = modify $ setTopMargin x
--- runInstruction (SetLeftMargin x) = modify $ setLeftMargin x
--- runInstruction Home = runHome
--- runInstruction (MoveTo y x anchor) = runMoveTo y x anchor
--- runInstruction (Center x) = runCenter x
--- runInstruction (VCenter x) = runVCenter x
 -- runInstruction (VSpace x) = out (VT.moveDown x) >> moveToLeftMargin
 -- runInstruction WaitForInput = runWaitForInput
 -- runInstruction (Pause d) = liftIO $ threadDelay $ nanoseconds d
