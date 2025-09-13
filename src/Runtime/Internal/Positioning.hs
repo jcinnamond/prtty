@@ -13,26 +13,26 @@ data Position = Position
     }
     deriving stock (Show, Eq)
 
-runHome :: Runtime
-runHome = do
+home :: Runtime
+home = do
     y <- gets topMargin
     x <- gets leftMargin
     out $ VT.moveTo y x
 
-runMoveTo :: Maybe Value -> Maybe Value -> Anchor -> Runtime
-runMoveTo (Just y) Nothing anchor = moveToY y anchor
-runMoveTo Nothing (Just x) anchor = moveToX x anchor
-runMoveTo (Just y) (Just x) anchor = moveToYX y x anchor
-runMoveTo Nothing Nothing _ = pure ()
+moveTo :: Maybe Value -> Maybe Value -> Anchor -> Runtime
+moveTo (Just y) Nothing anchor = moveToY y anchor
+moveTo Nothing (Just x) anchor = moveToX x anchor
+moveTo (Just y) (Just x) anchor = moveToYX y x anchor
+moveTo Nothing Nothing _ = pure ()
 
-runCenter :: Int -> Runtime
-runCenter x = do
+center :: Int -> Runtime
+center x = do
     width <- gets width
     let col = width `div` 2 - x `div` 2
     out $ VT.moveToCol col
 
-runVCenter :: Int -> Runtime
-runVCenter x = do
+vCenter :: Int -> Runtime
+vCenter x = do
     height <- gets height
     left <- gets leftMargin
     let row = height `div` 2 - x `div` 2
@@ -58,6 +58,9 @@ moveToX x anchor = do
     width <- gets width
     leftMargin <- gets leftMargin
     out $ VT.moveToCol (resolve x anchor width leftMargin)
+
+moveToLeftMargin :: Runtime
+moveToLeftMargin = moveToX (Number 0) Margin
 
 moveToYX :: Value -> Value -> Anchor -> Runtime
 moveToYX y x anchor = do
