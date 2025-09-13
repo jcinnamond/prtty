@@ -1,7 +1,7 @@
 module Runtime.Internal.Positioning where
 
 import Control.Monad.State (gets, modify)
-import Runtime.Internal.Output (out)
+import Runtime.Internal.IO (out)
 import Runtime.Internal.Types (Anchor (..), Environment (..), Runtime)
 import Runtime.Value
 import Runtime.Value qualified as RuntimeValue

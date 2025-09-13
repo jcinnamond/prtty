@@ -2,7 +2,9 @@ module Runtime.Internal.Run where
 
 import Control.Monad.State (execStateT)
 import Data.Vector ((!?))
+import Runtime.Internal.IO (out)
 import Runtime.Internal.Navigation qualified as Navigation
+import Runtime.Internal.Output qualified as Output
 import Runtime.Internal.Positioning qualified as Positioning
 import Runtime.Internal.Types (Environment (..), Instruction (..), Runtime)
 
@@ -24,6 +26,9 @@ runInstruction (Center x) = Positioning.center x
 runInstruction (VCenter x) = Positioning.vCenter x
 runInstruction (SetTopMargin x) = Positioning.setTopMargin x
 runInstruction (SetLeftMargin x) = Positioning.setLeftMargin x
+runInstruction (Output t) = out t
+runInstruction Newline = Output.newline
+runInstruction (VSpace x) = Output.vspace x
 runInstruction _ = undefined
 
 -- runInstruction WaitForInput = runWaitForInput

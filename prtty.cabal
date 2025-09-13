@@ -49,6 +49,7 @@ library
     Parser.Parser
     PrettyPrint
     Runtime.Instructions
+    Runtime.Internal.IO
     Runtime.Internal.Navigation
     Runtime.Internal.Output
     Runtime.Internal.Positioning
