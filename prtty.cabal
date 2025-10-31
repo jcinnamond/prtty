@@ -49,10 +49,10 @@ library
     Parser.Parser
     PrettyPrint
     Runtime.Instructions
-    Runtime.Internal.IO
     Runtime.Internal.Navigation
     Runtime.Internal.Output
     Runtime.Internal.Positioning
+    Runtime.Internal.Primitive
     Runtime.Internal.Run
     Runtime.Internal.Types
     Runtime.Run

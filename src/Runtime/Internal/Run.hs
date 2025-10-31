@@ -2,10 +2,10 @@ module Runtime.Internal.Run where
 
 import Control.Monad.State (execStateT)
 import Data.Vector ((!?))
-import Runtime.Internal.IO (out)
 import Runtime.Internal.Navigation qualified as Navigation
 import Runtime.Internal.Output qualified as Output
 import Runtime.Internal.Positioning qualified as Positioning
+import Runtime.Internal.Primitive (out)
 import Runtime.Internal.Types (Environment (..), Instruction (..), Runtime)
 
 run' :: Environment -> IO ()

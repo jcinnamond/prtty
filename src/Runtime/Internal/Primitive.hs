@@ -1,4 +1,9 @@
-module Runtime.Internal.IO where
+{- |
+Description: Primitive functions for the runtime.
+
+These are kept separate to avoid circular imports.
+-}
+module Runtime.Internal.Primitive where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Text (Text)
